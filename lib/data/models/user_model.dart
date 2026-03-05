@@ -6,6 +6,7 @@ class UserModel extends Equatable {
   final String uid;
   final String? email;
   final String? displayName;
+  final String? rollNo; // Added rollNo field
   final UserRole role;
 
   const UserModel({
@@ -13,6 +14,7 @@ class UserModel extends Equatable {
     required this.role,
     this.email,
     this.displayName,
+    this.rollNo,
   });
 
   static UserRole roleFromString(String? raw) {
@@ -30,6 +32,7 @@ class UserModel extends Equatable {
       uid: uid,
       email: (map['email'] as String?)?.trim(),
       displayName: (map['displayName'] as String?)?.trim(),
+      rollNo: (map['rollNo'] as String?)?.trim(), // Mapping rollNo
       role: roleFromString(map['role'] as String?),
     );
   }
@@ -38,11 +41,12 @@ class UserModel extends Equatable {
     return <String, dynamic>{
       'email': email,
       'displayName': displayName,
+      'rollNo': rollNo, // Adding rollNo to Map
       'role': roleToString(role),
     };
   }
 
   @override
-  List<Object?> get props => [uid, email, displayName, role];
+  // Added rollNo to props for value equality
+  List<Object?> get props => [uid, email, displayName, rollNo, role];
 }
-

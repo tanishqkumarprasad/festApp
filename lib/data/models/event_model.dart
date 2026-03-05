@@ -4,6 +4,7 @@ import 'package:equatable/equatable.dart';
 class EventModel extends Equatable {
   final String id;
   final String title;
+  final String club; // e.g. hackslash, vista, tesla
   final String category;
   final String status; // 'live' | 'upcoming' | any custom value
   final DateTime? startAt;
@@ -12,6 +13,7 @@ class EventModel extends Equatable {
   const EventModel({
     required this.id,
     required this.title,
+    required this.club,
     required this.category,
     required this.status,
     this.startAt,
@@ -34,6 +36,7 @@ class EventModel extends Equatable {
     return EventModel(
       id: doc.id,
       title: (data['title'] as String?)?.trim() ?? '',
+      club: (data['club'] as String?)?.trim() ?? 'general',
       category: (data['category'] as String?)?.trim() ?? 'general',
       status: (data['status'] as String?)?.trim() ?? 'upcoming',
       startAt: _toDateTime(data['startAt']),
@@ -44,6 +47,7 @@ class EventModel extends Equatable {
   Map<String, dynamic> toMap() {
     return <String, dynamic>{
       'title': title,
+      'club': club,
       'category': category,
       'status': status,
       'startAt': startAt,
@@ -52,6 +56,6 @@ class EventModel extends Equatable {
   }
 
   @override
-  List<Object?> get props => [id, title, category, status, startAt, endAt];
+  List<Object?> get props => [id, title, club, category, status, startAt, endAt];
 }
 

@@ -9,11 +9,16 @@ import 'event_event.dart';
 import 'event_state.dart';
 
 class EventBloc extends Bloc<EventEvent, EventState> {
-  final EventRepository _eventRepository;
+  final EventRepository? _eventRepository;
+  final bool _useRepository;
   List<EventModel> _allEvents = const [];
 
-  EventBloc({EventRepository? eventRepository})
-      : _eventRepository = eventRepository ?? EventRepository(),
+  EventBloc({
+    EventRepository? eventRepository,
+    bool useRepository = true,
+  })  : _useRepository = useRepository,
+        _eventRepository =
+            useRepository ? (eventRepository ?? EventRepository()) : null,
         super(const EventLoading()) {
     on<FetchEvents>(_onFetchEvents);
     on<RefreshEvents>(_onRefreshEvents);
@@ -24,9 +29,15 @@ class EventBloc extends Bloc<EventEvent, EventState> {
     FetchEvents event,
     Emitter<EventState> emit,
   ) async {
+    if (!_useRepository) {
+      _allEvents = const [];
+      emit(const EventEmpty());
+      return;
+    }
+
     emit(const EventLoading());
     try {
-      _allEvents = await _eventRepository.fetchEvents();
+      _allEvents = await _eventRepository!.fetchEvents();
       if (_allEvents.isEmpty) {
         emit(const EventEmpty());
       } else {
