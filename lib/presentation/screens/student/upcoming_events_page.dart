@@ -68,6 +68,7 @@ class _UpcomingEventsPageState extends State<UpcomingEventsPage> {
         final events = state is EventLoaded ? state.events : <EventModel>[];
 
         return Scaffold(
+
           appBar: AppBar(title: const Text('Upcoming Events')),
           body: Column(
             children: [

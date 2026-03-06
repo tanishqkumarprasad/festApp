@@ -13,5 +13,8 @@ class FirestoreProvider {
 
   DocumentReference<Map<String, dynamic>> userDoc(String uid) =>
       _firestore.collection('users').doc(uid);
+
+  CollectionReference<Map<String, dynamic>> noticesCollection() =>
+      _firestore.collection('notices');
 }
 
