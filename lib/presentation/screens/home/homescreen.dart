@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_strings.dart';
 import '../../../core/utils/button.dart';
 import '../../../data/models/event_model.dart';
 import '../../../logic/bloc/event/event_bloc.dart';
 import '../../../logic/bloc/event/event_state.dart';
-import '../../../presentation/router/app_router.dart';
 import '../student/upcoming_events_page.dart';
+import '../student/notice_page.dart';
+import '../profile/profile_page.dart';
 
 class StudentHomeScreen extends StatelessWidget {
   const StudentHomeScreen({super.key});
@@ -27,7 +27,7 @@ class StudentHomeScreen extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _buildTopBar(),
+              _buildTopBar(context),
               const SizedBox(height: 24),
               BlocBuilder<EventBloc, EventState>(
                 builder: (BuildContext context, EventState state) {
@@ -173,7 +173,7 @@ class StudentHomeScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildTopBar() {
+  Widget _buildTopBar(BuildContext context) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
@@ -185,14 +185,23 @@ class StudentHomeScreen extends StatelessWidget {
             fontWeight: FontWeight.w700,
           ),
         ),
-        Container(
-          width: 40,
-          height: 40,
-          decoration: const BoxDecoration(
-            shape: BoxShape.circle,
-            color: Color(0xFF1E293B),
+        GestureDetector(
+          onTap: () {
+            Navigator.of(context).push(
+              MaterialPageRoute<void>(
+                builder: (_) => const ProfilePage(),
+              ),
+            );
+          },
+          child: Container(
+            width: 40,
+            height: 40,
+            decoration: const BoxDecoration(
+              shape: BoxShape.circle,
+              color: Color(0xFF1E293B),
+            ),
+            child: const Icon(Icons.person_outline, color: Colors.white),
           ),
-          child: const Icon(Icons.person_outline, color: Colors.white),
         ),
       ],
     );
@@ -214,7 +223,7 @@ class StudentHomeScreen extends StatelessWidget {
           text: 'See All',
           variant: AppButtonVariant.text,
           size: AppButtonSize.small,
-          onPressed: () => AppRouter.navigateToUpcomingEvents(context),
+          onPressed: () {},
         ),
       ],
     );
@@ -539,10 +548,26 @@ class _StudentBottomNavBar extends StatelessWidget {
           _NavItem(
             icon: Icons.calendar_month,
             label: 'Upcoming',
-            onTap: () => AppRouter.navigateToUpcomingEvents(context),
+            onTap: () {
+              Navigator.of(context).push(
+                MaterialPageRoute<void>(
+                  builder: (_) => const UpcomingEventsPage(),
+                ),
+              );
+            },
           ),
           const _NavItem(icon: Icons.info_outline, label: 'About Us'),
-          const _NavItem(icon: Icons.notifications_none, label: 'Notice'),
+          _NavItem(
+            icon: Icons.notifications_none,
+            label: 'Notice',
+            onTap: () {
+              Navigator.of(context).push(
+                MaterialPageRoute<void>(
+                  builder: (_) => const NoticePage(),
+                ),
+              );
+            },
+          ),
         ],
       ),
     );
