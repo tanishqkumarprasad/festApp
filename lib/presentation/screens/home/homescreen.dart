@@ -7,7 +7,7 @@ import '../../../data/models/event_model.dart';
 import '../../../logic/bloc/event/event_bloc.dart';
 import '../../../logic/bloc/event/event_state.dart';
 import '../student/upcoming_events_page.dart';
-import '../student/notice_page.dart';
+import '../student/notices_screen.dart';
 import '../profile/profile_page.dart';
 
 class StudentHomeScreen extends StatelessWidget {
@@ -563,7 +563,7 @@ class _StudentBottomNavBar extends StatelessWidget {
             onTap: () {
               Navigator.of(context).push(
                 MaterialPageRoute<void>(
-                  builder: (_) => const NoticePage(),
+                  builder: (_) => const NoticesScreen(),
                 ),
               );
             },

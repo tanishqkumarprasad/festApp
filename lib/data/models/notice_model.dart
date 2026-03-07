@@ -1,79 +1,37 @@
+
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:equatable/equatable.dart';
 
-enum NoticeContentTypeModel { text, image, pdf }
-
-class NoticeModel extends Equatable {
+class NoticeModel {
   final String id;
-  final String subject;
-  final String description;
-  final String authority;
-  final NoticeContentTypeModel contentType;
-  final String content; // could be plain text or a URL to file
+  final String eventName;
+  final String otherDetails;
+  final String imageUrl;
+  final String rulebookPdfUrl;
+  final String registrationLink;
   final DateTime? createdAt;
+  final DateTime? eventDate;
 
-  const NoticeModel({
+  NoticeModel({
     required this.id,
-    required this.subject,
-    required this.description,
-    required this.authority,
-    required this.contentType,
-    required this.content,
+    required this.eventName,
+    required this.otherDetails,
+    required this.imageUrl,
+    required this.rulebookPdfUrl,
+    required this.registrationLink,
     this.createdAt,
+    this.eventDate,
   });
 
-  static NoticeContentTypeModel _parseType(String? raw) {
-    final v = (raw ?? '').toLowerCase();
-    switch (v) {
-      case 'image':
-        return NoticeContentTypeModel.image;
-      case 'pdf':
-        return NoticeContentTypeModel.pdf;
-      case 'text':
-      default:
-        return NoticeContentTypeModel.text;
-    }
-  }
-
-  static DateTime? _toDateTime(dynamic v) {
-    if (v == null) return null;
-    if (v is DateTime) return v;
-    if (v is Timestamp) return v.toDate();
-    return null;
-  }
-
-  factory NoticeModel.fromFirestore(
-    DocumentSnapshot<Map<String, dynamic>> doc,
-  ) {
-    final data = doc.data() ?? <String, dynamic>{};
+  factory NoticeModel.fromMap(Map<String, dynamic> map, String id) {
     return NoticeModel(
-      id: doc.id,
-      subject: (data['subject'] as String?)?.trim() ?? '',
-      description: (data['description'] as String?)?.trim() ?? '',
-      authority: (data['authority'] as String?)?.trim() ?? '',
-      contentType: _parseType(data['contentType'] as String?),
-      content: (data['content'] as String?)?.trim() ?? '',
-      createdAt: _toDateTime(data['createdAt']),
+      id: id,
+      eventName: map['eventName'] ?? '',
+      otherDetails: map['otherDetails'] ?? '',
+      imageUrl: map['imageUrl'] ?? '',
+      rulebookPdfUrl: map['rulebookPdfUrl'] ?? '',
+      registrationLink: map['registrationLink'] ?? '',
+      createdAt: map['createdAt'] != null ? (map['createdAt'] as Timestamp).toDate() : null,
+      eventDate: map['eventDate'] != null ? (map['eventDate'] as Timestamp).toDate() : null,
     );
   }
-
-  Map<String, dynamic> toMap() {
-    return <String, dynamic>{
-      'subject': subject,
-      'description': description,
-      'authority': authority,
-      'contentType': switch (contentType) {
-        NoticeContentTypeModel.text => 'text',
-        NoticeContentTypeModel.image => 'image',
-        NoticeContentTypeModel.pdf => 'pdf',
-      },
-      'content': content,
-      'createdAt': createdAt,
-    };
-  }
-
-  @override
-  List<Object?> get props =>
-      [id, subject, description, authority, contentType, content, createdAt];
 }
-
