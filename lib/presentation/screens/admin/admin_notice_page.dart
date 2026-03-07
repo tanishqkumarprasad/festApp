@@ -1,13 +1,15 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:file_picker/file_picker.dart';
+import 'package:intl/intl.dart';
 
 import '../../../core/constants/app_colors.dart';
 import '../../../core/utils/button.dart';
 import '../../../logic/bloc/admin/admin_bloc.dart';
 import '../../../logic/bloc/admin/admin_event.dart';
 import '../../../logic/bloc/admin/admin_state.dart';
-
-enum AdminNoticeContentType { text, image, pdf }
 
 class AdminNoticePage extends StatefulWidget {
   const AdminNoticePage({super.key});
@@ -17,20 +19,103 @@ class AdminNoticePage extends StatefulWidget {
 }
 
 class _AdminNoticePageState extends State<AdminNoticePage> {
-  final TextEditingController _subjectController = TextEditingController();
+  final TextEditingController _eventNameController = TextEditingController();
   final TextEditingController _descriptionController = TextEditingController();
-  final TextEditingController _authorityController = TextEditingController();
-  final TextEditingController _textNoticeController = TextEditingController();
+  final TextEditingController _registrationLinkController = TextEditingController();
 
-  AdminNoticeContentType _selectedType = AdminNoticeContentType.text;
+  DateTime? _selectedDate;
+  File? _imageFile;
+  File? _pdfFile;
 
   @override
   void dispose() {
-    _subjectController.dispose();
+    _eventNameController.dispose();
     _descriptionController.dispose();
-    _authorityController.dispose();
-    _textNoticeController.dispose();
+    _registrationLinkController.dispose();
     super.dispose();
+  }
+
+  // --- FILE PICKING LOGIC ---
+  Future<void> _pickImage() async {
+    final ImagePicker picker = ImagePicker();
+    final XFile? image = await picker.pickImage(source: ImageSource.gallery);
+    if (image != null) {
+      setState(() {
+        _imageFile = File(image.path);
+      });
+    }
+  }
+
+  Future<void> _pickPdf() async {
+    FilePickerResult? result = await FilePicker.platform.pickFiles(
+      type: FileType.custom,
+      allowedExtensions: ['pdf'],
+    );
+    if (result != null) {
+      setState(() {
+        _pdfFile = File(result.files.single.path!);
+      });
+    }
+  }
+
+  Future<void> _pickDate() async {
+    final DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: DateTime.now(),
+      firstDate: DateTime.now(),
+      lastDate: DateTime(2030),
+      builder: (context, child) {
+        return Theme(
+          data: ThemeData.dark().copyWith(
+            colorScheme: const ColorScheme.dark(
+              primary: AppColors.primary,
+              surface: Color(0xFF0F172A),
+            ),
+          ),
+          child: child!,
+        );
+      },
+    );
+    if (picked != null && picked != _selectedDate) {
+      setState(() {
+        _selectedDate = picked;
+      });
+    }
+  }
+
+  // --- SUBMIT LOGIC ---
+  void _onPostPressed() {
+    // 1. Validate that all required fields and files are provided
+    if (_eventNameController.text.isEmpty ||
+        _selectedDate == null ||
+        _imageFile == null ||
+        _pdfFile == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please fill all fields and select both files!')),
+      );
+      return;
+    }
+
+    // 2. Send the specific named parameters to the Bloc
+    context.read<AdminBloc>().add(PostNotice(
+      eventName: _eventNameController.text.trim(),
+      eventDate: _selectedDate!,
+      registrationLink: _registrationLinkController.text.trim(),
+      otherDetails: _descriptionController.text.trim(),
+      imageFile: _imageFile!,
+      pdfFile: _pdfFile!,
+    ));
+  }
+
+  void _clearForm() {
+    _eventNameController.clear();
+    _descriptionController.clear();
+    _registrationLinkController.clear();
+    setState(() {
+      _selectedDate = null;
+      _imageFile = null;
+      _pdfFile = null;
+    });
   }
 
   @override
@@ -43,66 +128,78 @@ class _AdminNoticePageState extends State<AdminNoticePage> {
         backgroundColor: darkBackground,
         elevation: 0,
         iconTheme: const IconThemeData(color: Colors.white),
-        title: const Text(
-          'Post Notice',
-          style: TextStyle(
-            color: Colors.white,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
+        title: const Text('Post Event Notice', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
       ),
       body: SafeArea(
         child: BlocConsumer<AdminBloc, AdminState>(
           listener: (BuildContext context, AdminState state) {
             if (state is AdminActionSuccess) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text(state.message)),
-              );
+              ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(state.message)));
               _clearForm();
             } else if (state is AdminActionError) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text(state.message)),
-              );
+              ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(state.message)));
             }
           },
           builder: (BuildContext context, AdminState state) {
             final bool isLoading = state is AdminActionProgress;
 
             return SingleChildScrollView(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _buildSectionTitle('Basic details (all optional)'),
+                  _buildSectionTitle('Event Details'),
                   const SizedBox(height: 12),
-                  _buildTextField(
-                    label: 'Subject',
-                    hint: 'Enter subject of the notice (optional)',
-                    controller: _subjectController,
-                  ),
+                  _buildTextField(label: 'Event Name', hint: 'e.g. Hackathon 2026', controller: _eventNameController),
                   const SizedBox(height: 12),
-                  _buildTextField(
-                    label: 'Description',
-                    hint: 'Short description for the notice (optional)',
-                    controller: _descriptionController,
-                    maxLines: 3,
+
+                  // Date Picker Field
+                  GestureDetector(
+                    onTap: _pickDate,
+                    child: AbsorbPointer(
+                      child: _buildTextField(
+                        label: 'Event Date',
+                        hint: _selectedDate == null ? 'Tap to select date' : DateFormat('yyyy-MM-dd').format(_selectedDate!),
+                        controller: TextEditingController(),
+                      ),
+                    ),
                   ),
+
                   const SizedBox(height: 12),
-                  _buildTextField(
-                    label: 'Sending authority',
-                    hint: 'Who is sending this notice? (optional)',
-                    controller: _authorityController,
-                  ),
+                  _buildTextField(label: 'Registration Link', hint: 'https://forms.gle/...', controller: _registrationLinkController),
+                  const SizedBox(height: 12),
+                  _buildTextField(label: 'Other Details', hint: 'Rules, prizes, etc.', controller: _descriptionController, maxLines: 3),
+
                   const SizedBox(height: 24),
-                  _buildSectionTitle('Notice content type'),
+                  _buildSectionTitle('Event Files'),
                   const SizedBox(height: 12),
-                  _buildContentTypeChips(),
-                  const SizedBox(height: 16),
-                  _buildContentInput(),
+
+                  // Image Picker Button
+                  GestureDetector(
+                    onTap: _pickImage,
+                    child: _buildAttachmentBox(
+                      icon: Icons.image_outlined,
+                      title: 'Event Poster (Image)',
+                      subtitle: _imageFile != null ? _imageFile!.path.split('/').last : 'Tap to select an image from gallery',
+                      isSelected: _imageFile != null,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+
+                  // PDF Picker Button
+                  GestureDetector(
+                    onTap: _pickPdf,
+                    child: _buildAttachmentBox(
+                      icon: Icons.picture_as_pdf_outlined,
+                      title: 'Rulebook (PDF)',
+                      subtitle: _pdfFile != null ? _pdfFile!.path.split('/').last : 'Tap to select a PDF document',
+                      isSelected: _pdfFile != null,
+                    ),
+                  ),
+
                   const SizedBox(height: 32),
                   AppButton(
-                    text: isLoading ? 'Posting...' : 'Post notice',
+                    text: isLoading ? 'Uploading & Saving...' : 'Post Notice',
                     variant: AppButtonVariant.primary,
                     size: AppButtonSize.large,
                     isLoading: isLoading,
@@ -118,33 +215,14 @@ class _AdminNoticePageState extends State<AdminNoticePage> {
   }
 
   Widget _buildSectionTitle(String text) {
-    return Text(
-      text,
-      style: const TextStyle(
-        color: Colors.white70,
-        fontSize: 14,
-        fontWeight: FontWeight.w600,
-      ),
-    );
+    return Text(text, style: const TextStyle(color: Colors.white70, fontSize: 14, fontWeight: FontWeight.w600));
   }
 
-  Widget _buildTextField({
-    required String label,
-    required String hint,
-    required TextEditingController controller,
-    int maxLines = 1,
-  }) {
+  Widget _buildTextField({required String label, required String hint, required TextEditingController controller, int maxLines = 1}) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          label,
-          style: const TextStyle(
-            color: Colors.white,
-            fontSize: 13,
-            fontWeight: FontWeight.w500,
-          ),
-        ),
+        Text(label, style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w500)),
         const SizedBox(height: 6),
         TextField(
           controller: controller,
@@ -155,167 +233,38 @@ class _AdminNoticePageState extends State<AdminNoticePage> {
             hintStyle: const TextStyle(color: Colors.white38, fontSize: 13),
             filled: true,
             fillColor: const Color(0xFF0F172A),
-            contentPadding:
-                const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide:
-                  const BorderSide(color: Color(0xFF1E293B), width: 1),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: AppColors.primary, width: 1),
-            ),
+            contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+            enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFF1E293B))),
+            focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: AppColors.primary)),
           ),
         ),
       ],
     );
   }
 
-  Widget _buildContentTypeChips() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.start,
-      children: [
-        _buildChip(
-          label: 'Text',
-          isSelected: _selectedType == AdminNoticeContentType.text,
-          icon: Icons.notes,
-          onTap: () => _onTypeChanged(AdminNoticeContentType.text),
-        ),
-        const SizedBox(width: 8),
-        _buildChip(
-          label: 'Image',
-          isSelected: _selectedType == AdminNoticeContentType.image,
-          icon: Icons.image_outlined,
-          onTap: () => _onTypeChanged(AdminNoticeContentType.image),
-        ),
-        const SizedBox(width: 8),
-        _buildChip(
-          label: 'PDF',
-          isSelected: _selectedType == AdminNoticeContentType.pdf,
-          icon: Icons.picture_as_pdf_outlined,
-          onTap: () => _onTypeChanged(AdminNoticeContentType.pdf),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildChip({
-    required String label,
-    required bool isSelected,
-    required IconData icon,
-    required VoidCallback onTap,
-  }) {
-    final Color selectedColor = AppColors.primary;
-    final Color unselectedColor = const Color(0xFF1E293B);
-
-    return GestureDetector(
-      onTap: onTap,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 150),
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-        decoration: BoxDecoration(
-          color: isSelected ? selectedColor : unselectedColor,
-          borderRadius: BorderRadius.circular(999),
-          border: Border.all(
-            color: isSelected ? selectedColor : const Color(0xFF334155),
-            width: 1,
-          ),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              icon,
-              size: 16,
-              color: isSelected ? Colors.white : Colors.white70,
-            ),
-            const SizedBox(width: 6),
-            Text(
-              label,
-              style: TextStyle(
-                color: isSelected ? Colors.white : Colors.white70,
-                fontSize: 12,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildContentInput() {
-    switch (_selectedType) {
-      case AdminNoticeContentType.text:
-        return _buildTextField(
-          label: 'Notice text',
-          hint: 'Write the full notice here (optional)',
-          controller: _textNoticeController,
-          maxLines: 5,
-        );
-      case AdminNoticeContentType.image:
-        return _buildAttachmentPlaceholder(
-          icon: Icons.image_outlined,
-          title: 'Attach image (optional)',
-          subtitle:
-              'Tap to select an image file and then upload its URL in backend.',
-        );
-      case AdminNoticeContentType.pdf:
-        return _buildAttachmentPlaceholder(
-          icon: Icons.picture_as_pdf_outlined,
-          title: 'Attach PDF (optional)',
-          subtitle:
-              'Tap to select a PDF file and then upload its URL in backend.',
-        );
-    }
-  }
-
-  Widget _buildAttachmentPlaceholder({
-    required IconData icon,
-    required String title,
-    required String subtitle,
-  }) {
+  Widget _buildAttachmentBox({required IconData icon, required String title, required String subtitle, required bool isSelected}) {
     return Container(
-      width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
       decoration: BoxDecoration(
-        color: const Color(0xFF0F172A),
+        color: isSelected ? const Color(0xFF1E293B) : const Color(0xFF0F172A),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFF1E293B)),
+        border: Border.all(color: isSelected ? AppColors.primary : const Color(0xFF1E293B)),
       ),
       child: Row(
         children: [
           Container(
-            width: 40,
-            height: 40,
-            decoration: const BoxDecoration(
-              shape: BoxShape.circle,
-              color: Color(0xFF1E293B),
-            ),
-            child: Icon(icon, color: Colors.white, size: 22),
+            width: 40, height: 40,
+            decoration: BoxDecoration(shape: BoxShape.circle, color: isSelected ? AppColors.primary.withOpacity(0.2) : const Color(0xFF1E293B)),
+            child: Icon(icon, color: isSelected ? AppColors.primary : Colors.white, size: 22),
           ),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  title,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
+                Text(title, style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w600)),
                 const SizedBox(height: 4),
-                Text(
-                  subtitle,
-                  style: const TextStyle(
-                    color: Colors.white60,
-                    fontSize: 12,
-                  ),
-                ),
+                Text(subtitle, style: TextStyle(color: isSelected ? Colors.white : Colors.white60, fontSize: 12), maxLines: 1, overflow: TextOverflow.ellipsis),
               ],
             ),
           ),
@@ -323,37 +272,4 @@ class _AdminNoticePageState extends State<AdminNoticePage> {
       ),
     );
   }
-
-  void _onTypeChanged(AdminNoticeContentType type) {
-    setState(() {
-      _selectedType = type;
-    });
-  }
-
-  void _onPostPressed() {
-    final noticeData = <String, dynamic>{
-      'subject': _subjectController.text.trim(),
-      'description': _descriptionController.text.trim(),
-      'authority': _authorityController.text.trim(),
-      'contentType': switch (_selectedType) {
-        AdminNoticeContentType.text => 'text',
-        AdminNoticeContentType.image => 'image',
-        AdminNoticeContentType.pdf => 'pdf',
-      },
-      'content': _textNoticeController.text.trim(),
-    };
-
-    context.read<AdminBloc>().add(PostNotice(noticeData));
-  }
-
-  void _clearForm() {
-    _subjectController.clear();
-    _descriptionController.clear();
-    _authorityController.clear();
-    _textNoticeController.clear();
-    setState(() {
-      _selectedType = AdminNoticeContentType.text;
-    });
-  }
 }
-

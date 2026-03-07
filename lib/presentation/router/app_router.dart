@@ -6,17 +6,22 @@ import '../screens/auth/signuppage.dart';
 import '../screens/home/admin_home_screen.dart';
 import '../screens/home/homescreen.dart';
 import '../screens/student/upcoming_events_page.dart';
+import 'auth_guard.dart';
 
 class AppRouter {
-  static const String roleSelection = '/';
+  static const String choice = '/choice';
+  static const String roleSelection = choice;
+  static const String legacyRoot = '/';
   static const String login = '/login';
   static const String signup = '/signup';
   static const String home = '/home';
+  static const String adminHome = '/admin/home';
   static const String upcomingEvents = '/upcoming-events';
   static const String aboutUs = '/about-us';
 
   static Route<dynamic> generateRoute(RouteSettings settings) {
     switch (settings.name) {
+      case legacyRoot:
       case roleSelection:
         return MaterialPageRoute(builder: (_) => const RoleSelectionPage());
       case login:
@@ -24,16 +29,20 @@ class AppRouter {
         final role = args?['role'] as String? ?? 'student';
         return MaterialPageRoute(builder: (_) => LoginPage(userRole: role));
       case signup:
-        final args = settings.arguments as Map<String, dynamic>?;
-        final role = args?['role'] as String? ?? 'student';
-        return MaterialPageRoute(builder: (_) => SignupPage(userRole: role));
+        return MaterialPageRoute(builder: (_) => const SignupPage());
       case home:
-        final args = settings.arguments as Map<String, dynamic>?;
-        final role = args?['role'] as String? ?? 'student';
         return MaterialPageRoute(
-          builder: (_) => role == 'admin'
-              ? const AdminHomeScreen() // You'll need to create this
-              : const StudentHomeScreen(),
+          builder: (_) => AuthGuard(
+            requiredRole: 'student',
+            child: const StudentHomeScreen(),
+          ),
+        );
+      case adminHome:
+        return MaterialPageRoute(
+          builder: (_) => const AuthGuard(
+            requiredRole: 'admin',
+            child: AdminHomeScreen(),
+          ),
         );
       case upcomingEvents:
         return MaterialPageRoute(builder: (_) => const UpcomingEventsPage());
@@ -50,25 +59,40 @@ class AppRouter {
 
   // Navigation helpers
   static void navigateToRoleSelection(BuildContext context) {
+    navigateToChoice(context);
+  }
+
+  static void navigateToChoice(BuildContext context) {
     Navigator.of(
       context,
     ).pushNamedAndRemoveUntil(roleSelection, (route) => false);
   }
 
   static void navigateToLogin(BuildContext context, String role) {
-    Navigator.of(context).pushNamed(login, arguments: {'role': role});
-  }
-
-  static void navigateToSignup(BuildContext context, String role) {
-    Navigator.of(context).pushNamed(signup, arguments: {'role': role});
-  }
-
-  static void navigateToHome(BuildContext context, String role) {
     Navigator.of(context).pushNamedAndRemoveUntil(
-      home,
+      login,
       (route) => false,
       arguments: {'role': role},
     );
+  }
+
+  static void navigateToSignup(BuildContext context) {
+    Navigator.of(context).pushNamed(signup);
+  }
+
+  static void navigateToHome(BuildContext context, String role) {
+    if (role == 'admin') {
+      Navigator.of(context).pushNamedAndRemoveUntil(
+        adminHome,
+        (route) => false,
+      );
+    } else {
+      Navigator.of(context).pushNamedAndRemoveUntil(
+        home,
+        (route) => false,
+        arguments: {'role': 'student'},
+      );
+    }
   }
 
   static void navigateToUpcomingEvents(BuildContext context) {

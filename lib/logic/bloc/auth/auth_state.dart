@@ -24,6 +24,21 @@ class Unauthenticated extends AuthState {
   const Unauthenticated();
 }
 
+/// Signup completed successfully – user has been created and signed out.
+class SignupSuccess extends AuthState {
+  const SignupSuccess();
+}
+
+/// Auth operation failed – show readable error (e.g. wrong password).
+class AuthError extends AuthState {
+  final String message;
+
+  const AuthError(this.message);
+
+  @override
+  List<Object?> get props => [message];
+}
+
 /// User is authenticated – includes role (admin vs student).
 class Authenticated extends AuthState {
   final UserModel user;

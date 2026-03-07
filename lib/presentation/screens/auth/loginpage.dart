@@ -1,7 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_strings.dart';
 import '../../../core/utils/button.dart';
+import '../../../logic/bloc/auth/auth_bloc.dart';
+import '../../../logic/bloc/auth/auth_event.dart';
+import '../../../logic/bloc/auth/auth_state.dart';
 import '../../router/app_router.dart';
 
 class LoginPage extends StatefulWidget {
@@ -14,11 +19,12 @@ class LoginPage extends StatefulWidget {
 }
 
 class _LoginPageState extends State<LoginPage> {
+  static const String _adminEmail = 'SAC@nitp.ac.in';
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
-  bool _isLoading = false;
   bool _obscurePassword = true;
+  bool _handlingPostLogin = false;
 
   @override
   void dispose() {
@@ -29,14 +35,31 @@ class _LoginPageState extends State<LoginPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return BlocConsumer<AuthBloc, AuthState>(
+      listener: (context, state) {
+        if (state is AuthError) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(state.message),
+              backgroundColor: Colors.red,
+            ),
+          );
+        } else if (state is Authenticated) {
+          _handleAuthenticatedState(state);
+        }
+      },
+      buildWhen: (previous, current) =>
+          current is AuthLoading || current is AuthError || current is Unauthenticated,
+      builder: (context, state) {
+        final isLoading = state is AuthLoading;
+        return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
           icon: Icon(Icons.arrow_back, color: AppColors.textPrimary),
-          onPressed: () => Navigator.of(context).pop(),
+          onPressed: () => AppRouter.navigateToRoleSelection(context),
         ),
       ),
       body: SafeArea(
@@ -173,7 +196,33 @@ class _LoginPageState extends State<LoginPage> {
                   alignment: Alignment.centerRight,
                   child: TextButton(
                     onPressed: () {
-                      // TODO: Implement forgot password
+                      final email = _emailController.text.trim();
+                      if (email.isEmpty) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Please enter your email to reset password.'),
+                            backgroundColor: Colors.red,
+                          ),
+                        );
+                        return;
+                      }
+                      final auth = FirebaseAuth.instance;
+                      auth
+                          .sendPasswordResetEmail(email: email)
+                          .then((_) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Password reset link sent to your email.'),
+                          ),
+                        );
+                      }).catchError((error) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(error.toString()),
+                            backgroundColor: Colors.red,
+                          ),
+                        );
+                      });
                     },
                     child: Text(
                       'Forgot Password?',
@@ -191,66 +240,107 @@ class _LoginPageState extends State<LoginPage> {
                   text: AppStrings.login,
                   variant: AppButtonVariant.primary,
                   size: AppButtonSize.large,
-                  isLoading: _isLoading,
+                  isLoading: isLoading,
                   onPressed: _handleLogin,
                 ),
                 const SizedBox(height: 24),
 
-                // Sign Up Link
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text(
-                      "Don't have an account? ",
-                      style: TextStyle(color: AppColors.textSecondary),
-                    ),
-                    GestureDetector(
-                      onTap: () =>
-                          AppRouter.navigateToSignup(context, widget.userRole),
-                      child: Text(
-                        AppStrings.signup,
-                        style: TextStyle(
-                          color: AppColors.primary,
-                          fontWeight: FontWeight.w600,
+                if (widget.userRole == 'student') ...[
+                  // Sign Up Link (students only)
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        "Don't have an account? ",
+                        style: TextStyle(color: AppColors.textSecondary),
+                      ),
+                      GestureDetector(
+                        onTap: () => AppRouter.navigateToSignup(context),
+                        child: Text(
+                          AppStrings.signup,
+                          style: TextStyle(
+                            color: AppColors.primary,
+                            fontWeight: FontWeight.w600,
+                          ),
                         ),
                       ),
-                    ),
-                  ],
-                ),
+                    ],
+                  ),
+                ],
               ],
             ),
           ),
         ),
       ),
+      );
+      },
     );
   }
 
-  void _handleLogin() async {
+  void _handleLogin() {
     if (!_formKey.currentState!.validate()) return;
+    context.read<AuthBloc>().add(LoginRequested(
+          email: _emailController.text,
+          password: _passwordController.text,
+        ));
+  }
 
-    setState(() {
-      _isLoading = true;
-    });
-
+  Future<void> _handleAuthenticatedState(Authenticated state) async {
+    if (_handlingPostLogin) return;
+    _handlingPostLogin = true;
     try {
-      // TODO: Implement actual login logic with Firebase Auth
-      // For now, simulate login delay
-      await Future.delayed(const Duration(seconds: 2));
+      final auth = FirebaseAuth.instance;
+      final email = (state.user.email ?? '').trim().toLowerCase();
+      final isAdminUser = state.isAdmin;
+      final selectedPortal = widget.userRole.toLowerCase();
 
-      // Navigate to home on successful login
-      AppRouter.navigateToHome(context, widget.userRole);
-    } catch (e) {
-      // Show error message
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Login failed: ${e.toString()}'),
-          backgroundColor: Colors.red,
-        ),
-      );
+      if (selectedPortal == 'admin') {
+        if (!isAdminUser) {
+          await auth.signOut();
+          if (!mounted) return;
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Student accounts cannot login from admin portal'),
+              backgroundColor: Colors.red,
+            ),
+          );
+          AppRouter.navigateToLogin(context, 'student');
+          return;
+        }
+
+        if (email != _adminEmail.toLowerCase()) {
+          await auth.signOut();
+          if (!mounted) return;
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Only SAC@nitp.ac.in can login from admin portal'),
+              backgroundColor: Colors.red,
+            ),
+          );
+          AppRouter.navigateToChoice(context);
+          return;
+        }
+
+        AppRouter.navigateToHome(context, 'admin');
+        return;
+      }
+
+      if (email == _adminEmail.toLowerCase() || isAdminUser) {
+        await auth.signOut();
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Admin must login from admin portal'),
+            backgroundColor: Colors.red,
+          ),
+        );
+        AppRouter.navigateToLogin(context, 'admin');
+        return;
+      }
+
+      AppRouter.navigateToHome(context, 'student');
     } finally {
-      setState(() {
-        _isLoading = false;
-      });
+      _handlingPostLogin = false;
     }
   }
 }

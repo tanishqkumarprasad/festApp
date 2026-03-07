@@ -20,11 +20,12 @@ class UserModel extends Equatable {
   static UserRole roleFromString(String? raw) {
     final v = (raw ?? '').trim().toLowerCase();
     if (v == 'admin') return UserRole.admin;
-    return UserRole.student;
+    return UserRole.student; // 'user' (spec) or legacy 'student' in Firestore
   }
 
+  /// Firestore stores "user" (student) or "admin" per spec.
   static String roleToString(UserRole role) {
-    return role == UserRole.admin ? 'admin' : 'student';
+    return role == UserRole.admin ? 'admin' : 'user';
   }
 
   factory UserModel.fromMap(String uid, Map<String, dynamic> map) {

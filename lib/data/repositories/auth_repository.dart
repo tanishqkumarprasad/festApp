@@ -1,7 +1,9 @@
 import 'dart:async';
 
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart' as fb;
 
+import '../../core/utils/email_validator.dart';
 import '../dataproviders/firebase_auth_provider.dart';
 import '../dataproviders/firestore_provider.dart';
 import '../models/user_model.dart';
@@ -41,7 +43,7 @@ class AuthRepository {
     required String password,
   }) async {
     final cred = await _authProvider.signInWithEmailPassword(
-      email: email,
+      email: email.trim(),
       password: password,
     );
     final fb.User user = cred.user!;
@@ -61,11 +63,18 @@ class AuthRepository {
   Future<UserModel> signUp({
     required String email,
     required String password,
-    String? rollNo, // Added rollNo parameter
-    UserRole role = UserRole.student,
+    String? displayName,
+    String? rollNo,
   }) async {
+    // Restrict registration to student accounts only using @nitp.ac.in.
+    if (!isNitpEmail(email)) {
+      throw ArgumentError(
+        'Only NIT Patna email addresses are allowed for student accounts.',
+      );
+    }
+
     final cred = await _authProvider.signUpWithEmailPassword(
-      email: email,
+      email: email.trim(),
       password: password,
     );
     final fb.User user = cred.user!;
@@ -73,13 +82,28 @@ class AuthRepository {
     final userModel = UserModel(
       uid: user.uid,
       email: user.email,
-      displayName: user.displayName,
-      rollNo: rollNo, // Pass rollNo to model
-      role: role,
+      displayName: displayName ?? user.displayName,
+      rollNo: rollNo,
+      role: UserRole.student,
     );
 
-    // Save to Firestore including the rollNo via toMap()
-    await _firestoreProvider.userDoc(user.uid).set(userModel.toMap());
+    // Firestore: users/{uid} with email, role, createdAt, isActive per spec.
+    final Map<String, dynamic> docData = <String, dynamic>{
+      'email': user.email ?? email.trim(),
+      'role': UserModel.roleToString(UserRole.student),
+      'createdAt': FieldValue.serverTimestamp(),
+      'isActive': true,
+    };
+    if ((displayName ?? '').trim().isNotEmpty) {
+      docData['displayName'] = displayName!.trim();
+    }
+    if ((rollNo ?? '').trim().isNotEmpty) {
+      docData['rollNo'] = rollNo!.trim();
+    }
+    await _firestoreProvider.userDoc(user.uid).set(docData);
+
+    // Immediately sign the user out after successful registration.
+    await _authProvider.signOut();
 
     return userModel;
   }

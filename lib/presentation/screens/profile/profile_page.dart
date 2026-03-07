@@ -4,7 +4,9 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../data/models/user_model.dart';
 import '../../../logic/bloc/auth/auth_bloc.dart';
+import '../../../logic/bloc/auth/auth_event.dart';
 import '../../../logic/bloc/auth/auth_state.dart';
+import '../../router/app_router.dart';
 
 class ProfilePage extends StatelessWidget {
   const ProfilePage({super.key});
@@ -13,7 +15,17 @@ class ProfilePage extends StatelessWidget {
   Widget build(BuildContext context) {
     const darkBackground = Color(0xFF020617);
 
-    return Scaffold(
+    return BlocListener<AuthBloc, AuthState>(
+      listenWhen: (previous, current) => current is Unauthenticated,
+      listener: (context, state) {
+        if (state is Unauthenticated) {
+          Navigator.of(context).pushNamedAndRemoveUntil(
+            AppRouter.roleSelection,
+            (route) => false,
+          );
+        }
+      },
+      child: Scaffold(
       backgroundColor: darkBackground,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
@@ -25,47 +37,21 @@ class ProfilePage extends StatelessWidget {
         ),
       ),
       body: SafeArea(
-        child: Center(
-          // Instead of relying entirely on an AuthBloc (which may not
-          // exist during early UI testing without Firebase) we attempt to
-          // read the state; if there's no authenticated user we fall back
-          // to a hard‑coded dummy profile so the page can render.
-          child: Builder(
-            builder: (context) {
-              UserModel user;
-              String roleText;
+        child: BlocBuilder<AuthBloc, AuthState>(
+          builder: (context, state) {
+            if (state is! Authenticated) {
+              return const SizedBox.shrink();
+            }
 
-              try {
-                final authState = context.read<AuthBloc>().state;
-                if (authState is Authenticated) {
-                  user = authState.user;
-                } else {
-                  // not logged in -> fall back to dummy
-                  user = UserModel(
-                    uid: 'test',
-                    displayName: 'Test User',
-                    role: UserRole.student,
-                    email: 'test@example.com',
-                    rollNo: '000000',
-                  );
-                }
-              } catch (_) {
-                // no AuthBloc in the tree at all; use dummy data
-                user = UserModel(
-                  uid: 'test',
-                  displayName: 'Test User',
-                  role: UserRole.student,
-                  email: 'test@example.com',
-                  rollNo: '000000',
-                );
-              }
+            final UserModel user = state.user;
+            final String name = (user.displayName?.isNotEmpty ?? false)
+                ? user.displayName!
+                : 'User';
+            final String roleText =
+                user.role == UserRole.admin ? 'Admin' : 'Student';
 
-              final String name = (user.displayName?.isNotEmpty ?? false)
-                  ? user.displayName!
-                  : 'User';
-              roleText = user.role == UserRole.admin ? 'Admin' : 'Student';
-
-              return Padding(
+            return Center(
+              child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 24),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
@@ -106,13 +92,29 @@ class ProfilePage extends StatelessWidget {
                       const SizedBox(height: 8),
                       _InfoRow(label: 'Email', value: user.email!),
                     ],
+                    const SizedBox(height: 32),
+                    SizedBox(
+                      width: double.infinity,
+                      child: OutlinedButton.icon(
+                        onPressed: () {
+                          context.read<AuthBloc>().add(const LoggedOut());
+                        },
+                        icon: const Icon(Icons.logout, size: 20),
+                        label: const Text('Logout'),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: Colors.white70,
+                          side: const BorderSide(color: Colors.white38),
+                        ),
+                      ),
+                    ),
                   ],
                 ),
-              );
-            },
-          ),
+              ),
+            );
+          },
         ),
       ),
+    ),
     );
   }
 }

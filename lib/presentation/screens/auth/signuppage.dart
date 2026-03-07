@@ -1,13 +1,16 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_strings.dart';
 import '../../../core/utils/button.dart';
+import '../../../core/utils/email_validator.dart';
+import '../../../logic/bloc/auth/auth_bloc.dart';
+import '../../../logic/bloc/auth/auth_event.dart';
+import '../../../logic/bloc/auth/auth_state.dart';
 import '../../router/app_router.dart';
 
 class SignupPage extends StatefulWidget {
-  final String userRole;
-
-  const SignupPage({super.key, required this.userRole});
+  const SignupPage({super.key});
 
   @override
   State<SignupPage> createState() => _SignupPageState();
@@ -20,7 +23,6 @@ class _SignupPageState extends State<SignupPage> {
   final _rollNoController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
-  bool _isLoading = false;
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
 
@@ -36,7 +38,27 @@ class _SignupPageState extends State<SignupPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return BlocConsumer<AuthBloc, AuthState>(
+      listener: (context, state) {
+        if (state is AuthError) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(state.message),
+              backgroundColor: Colors.red,
+            ),
+          );
+          if (state.message == 'Account already exists. Please login.') {
+            AppRouter.navigateToLogin(context, 'student');
+          }
+        } else if (state is SignupSuccess) {
+          AppRouter.navigateToLogin(context, 'student');
+        }
+      },
+      buildWhen: (previous, current) =>
+          current is AuthLoading || current is AuthError || current is Unauthenticated,
+      builder: (context, state) {
+        final isLoading = state is AuthLoading;
+        return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
@@ -57,7 +79,7 @@ class _SignupPageState extends State<SignupPage> {
                 const SizedBox(height: 16),
                 // Header
                 Text(
-                  '${widget.userRole.toUpperCase()} SIGNUP',
+                  'STUDENT SIGNUP',
                   style: const TextStyle(
                     fontSize: 28,
                     fontWeight: FontWeight.bold,
@@ -156,51 +178,52 @@ class _SignupPageState extends State<SignupPage> {
                     ).hasMatch(value)) {
                       return 'Please enter a valid email';
                     }
+                    if (!isNitpEmail(value)) {
+                      return 'Only NIT Patna email addresses are allowed for student accounts.';
+                    }
                     return null;
                   },
                 ),
                 const SizedBox(height: 20),
 
-                // Roll Number Field (only for students)
-                if (widget.userRole == 'student') ...[
-                  TextFormField(
-                    controller: _rollNoController,
-                    decoration: InputDecoration(
-                      labelText: 'Roll Number',
-                      hintText: 'Enter your roll number',
-                      prefixIcon: Icon(
-                        Icons.badge_outlined,
-                        color: AppColors.primary,
-                      ),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide(
-                          color: AppColors.textSecondary.withValues(alpha: 0.3),
-                        ),
-                      ),
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide(
-                          color: AppColors.textSecondary.withValues(alpha: 0.3),
-                        ),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: const BorderSide(
-                          color: AppColors.primary,
-                          width: 2,
-                        ),
+                // Roll Number Field
+                TextFormField(
+                  controller: _rollNoController,
+                  decoration: InputDecoration(
+                    labelText: 'Roll Number',
+                    hintText: 'Enter your roll number',
+                    prefixIcon: Icon(
+                      Icons.badge_outlined,
+                      color: AppColors.primary,
+                    ),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide(
+                        color: AppColors.textSecondary.withValues(alpha: 0.3),
                       ),
                     ),
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Please enter your roll number';
-                      }
-                      return null;
-                    },
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide(
+                        color: AppColors.textSecondary.withValues(alpha: 0.3),
+                      ),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: const BorderSide(
+                        color: AppColors.primary,
+                        width: 2,
+                      ),
+                    ),
                   ),
-                  const SizedBox(height: 20),
-                ],
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Please enter your roll number';
+                    }
+                    return null;
+                  },
+                ),
+                const SizedBox(height: 20),
 
                 // Password Field
                 TextFormField(
@@ -319,7 +342,7 @@ class _SignupPageState extends State<SignupPage> {
                   text: AppStrings.signup,
                   variant: AppButtonVariant.primary,
                   size: AppButtonSize.large,
-                  isLoading: _isLoading,
+                  isLoading: isLoading,
                   onPressed: _handleSignup,
                 ),
                 const SizedBox(height: 24),
@@ -334,7 +357,7 @@ class _SignupPageState extends State<SignupPage> {
                     ),
                     GestureDetector(
                       onTap: () =>
-                          AppRouter.navigateToLogin(context, widget.userRole),
+                          AppRouter.navigateToLogin(context, 'student'),
                       child: Text(
                         AppStrings.login,
                         style: TextStyle(
@@ -350,35 +373,22 @@ class _SignupPageState extends State<SignupPage> {
           ),
         ),
       ),
+        );
+      },
     );
   }
 
-  void _handleSignup() async {
+  void _handleSignup() {
     if (!_formKey.currentState!.validate()) return;
-
-    setState(() {
-      _isLoading = true;
-    });
-
-    try {
-      // TODO: Implement actual signup logic with Firebase Auth
-      // For now, simulate signup delay
-      await Future.delayed(const Duration(seconds: 2));
-
-      // Navigate to home on successful signup
-      AppRouter.navigateToHome(context, widget.userRole);
-    } catch (e) {
-      // Show error message
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Signup failed: ${e.toString()}'),
-          backgroundColor: Colors.red,
-        ),
-      );
-    } finally {
-      setState(() {
-        _isLoading = false;
-      });
-    }
+    context.read<AuthBloc>().add(SignUpRequested(
+          email: _emailController.text,
+          password: _passwordController.text,
+          displayName: _nameController.text.trim().isEmpty
+              ? null
+              : _nameController.text.trim(),
+          rollNo: _rollNoController.text.trim().isEmpty
+              ? null
+              : _rollNoController.text.trim(),
+        ));
   }
 }

@@ -13,6 +13,35 @@ class AppStarted extends AuthEvent {
   const AppStarted();
 }
 
+/// Fired when the user submits the login form.
+class LoginRequested extends AuthEvent {
+  final String email;
+  final String password;
+
+  const LoginRequested({required this.email, required this.password});
+
+  @override
+  List<Object?> get props => [email, password];
+}
+
+/// Fired when the user submits the signup form.
+class SignUpRequested extends AuthEvent {
+  final String email;
+  final String password;
+  final String? displayName;
+  final String? rollNo;
+
+  const SignUpRequested({
+    required this.email,
+    required this.password,
+    this.displayName,
+    this.rollNo,
+  });
+
+  @override
+  List<Object?> get props => [email, password, displayName, rollNo];
+}
+
 /// Fired when a user successfully logs in or signs up via UI.
 /// Carries the newly authenticated user.
 class LoggedIn extends AuthEvent {
