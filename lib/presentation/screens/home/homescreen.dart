@@ -1,3 +1,4 @@
+import 'package:fest_app/presentation/screens/about_us/about_us_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../core/constants/app_colors.dart';
@@ -556,7 +557,17 @@ class _StudentBottomNavBar extends StatelessWidget {
               );
             },
           ),
-          const _NavItem(icon: Icons.info_outline, label: 'About Us'),
+          _NavItem(
+            icon: Icons.info_outline,
+            label: 'About Us',
+            onTap: () {
+              Navigator.of(context).push(
+                MaterialPageRoute<void>(
+                  builder: (_) => const AboutUsPage(),
+                ),
+              );
+            },
+          ),
           _NavItem(
             icon: Icons.notifications_none,
             label: 'Notice',

@@ -1,3 +1,4 @@
+import 'package:fest_app/presentation/screens/about_us/about_us_page.dart';
 import 'package:flutter/material.dart';
 import '../screens/auth/loginpage.dart';
 import '../screens/auth/roleselection.dart';
@@ -16,6 +17,7 @@ class AppRouter {
   static const String home = '/home';
   static const String adminHome = '/admin/home';
   static const String upcomingEvents = '/upcoming-events';
+  static const String aboutUs = '/about-us';
 
   static Route<dynamic> generateRoute(RouteSettings settings) {
     switch (settings.name) {
@@ -44,6 +46,8 @@ class AppRouter {
         );
       case upcomingEvents:
         return MaterialPageRoute(builder: (_) => const UpcomingEventsPage());
+      case aboutUs:
+        return MaterialPageRoute(builder: (_) => const AboutUsPage());
       default:
         return MaterialPageRoute(
           builder: (_) => Scaffold(
@@ -93,5 +97,9 @@ class AppRouter {
 
   static void navigateToUpcomingEvents(BuildContext context) {
     Navigator.of(context).pushNamed(upcomingEvents);
+  }
+
+  static void navigateToAboutUs(BuildContext context) {
+    Navigator.of(context).pushNamed(aboutUs);
   }
 }
