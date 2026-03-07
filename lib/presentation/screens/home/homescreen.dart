@@ -5,14 +5,38 @@ import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_strings.dart';
 import '../../../core/utils/button.dart';
 import '../../../data/models/event_model.dart';
+import '../../../data/providers/event_data_provider.dart';
 import '../../../logic/bloc/event/event_bloc.dart';
 import '../../../logic/bloc/event/event_state.dart';
+import '../../widgets/campus_events_widget.dart';
+import '../../widgets/top_events_section.dart';
+import '../../widgets/upcoming_event_card.dart';
 import '../student/upcoming_events_page.dart';
 import '../student/notice_page.dart';
 import '../profile/profile_page.dart';
 
 class StudentHomeScreen extends StatelessWidget {
   const StudentHomeScreen({super.key});
+
+  List<EventModel> _fallbackUpcomingEvents() {
+    // When Firestore is disabled (useRepository: false) the EventBloc emits
+    // EventEmpty. We still want the home to show top events, so reuse the same
+    // static provider backing UpcomingEventsPage.
+    final upcoming = EventDataProvider.getUpcomingEvents(limit: 20);
+    return upcoming
+        .map(
+          (u) => EventModel(
+            id: '${u.eventName}-${u.eventDate.toIso8601String()}',
+            title: u.eventName,
+            club: 'general',
+            category: u.campus,
+            status: 'upcoming',
+            startAt: u.eventDate,
+            endAt: null,
+          ),
+        )
+        .toList(growable: false);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -33,6 +57,7 @@ class StudentHomeScreen extends StatelessWidget {
               BlocBuilder<EventBloc, EventState>(
                 builder: (BuildContext context, EventState state) {
                   if (state is EventLoading) {
+                    final fallback = _fallbackUpcomingEvents();
                     return Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -42,9 +67,18 @@ class StudentHomeScreen extends StatelessWidget {
                           isLoading: true,
                         ),
                         const SizedBox(height: 32),
-                        _buildUpcomingHeader(context),
-                        const SizedBox(height: 16),
-                        const Center(child: CircularProgressIndicator()),
+                        TopEventsSection(
+                          title: 'Upcoming Events',
+                          events: fallback,
+                          limit: 5,
+                          onSeeAllTap: () {
+                            Navigator.of(context).push(
+                              MaterialPageRoute<void>(
+                                builder: (_) => const UpcomingEventsPage(),
+                              ),
+                            );
+                          },
+                        ),
                       ],
                     );
                   }
@@ -70,6 +104,7 @@ class StudentHomeScreen extends StatelessWidget {
                   }
 
                   if (state is EventEmpty) {
+                    final fallback = _fallbackUpcomingEvents();
                     return Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -78,11 +113,17 @@ class StudentHomeScreen extends StatelessWidget {
                           pillBackground: pillBackground,
                         ),
                         const SizedBox(height: 32),
-                        _buildUpcomingHeader(context),
-                        const SizedBox(height: 16),
-                        const Text(
-                          'No events yet. Stay tuned!',
-                          style: TextStyle(color: Colors.white70, fontSize: 13),
+                        TopEventsSection(
+                          title: 'Upcoming Events',
+                          events: fallback,
+                          limit: 5,
+                          onSeeAllTap: () {
+                            Navigator.of(context).push(
+                              MaterialPageRoute<void>(
+                                builder: (_) => const UpcomingEventsPage(),
+                              ),
+                            );
+                          },
                         ),
                       ],
                     );
@@ -91,6 +132,7 @@ class StudentHomeScreen extends StatelessWidget {
                   if (state is EventLoaded) {
                     final List<EventModel> events = state.events;
                     if (events.isEmpty) {
+                      final fallback = _fallbackUpcomingEvents();
                       return Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -99,14 +141,17 @@ class StudentHomeScreen extends StatelessWidget {
                             pillBackground: pillBackground,
                           ),
                           const SizedBox(height: 32),
-                          _buildUpcomingHeader(context),
-                          const SizedBox(height: 16),
-                          const Text(
-                            'No events yet. Stay tuned!',
-                            style: TextStyle(
-                              color: Colors.white70,
-                              fontSize: 13,
-                            ),
+                          TopEventsSection(
+                            title: 'Upcoming Events',
+                            events: fallback,
+                            limit: 5,
+                            onSeeAllTap: () {
+                              Navigator.of(context).push(
+                                MaterialPageRoute<void>(
+                                  builder: (_) => const UpcomingEventsPage(),
+                                ),
+                              );
+                            },
                           ),
                         ],
                       );
@@ -124,6 +169,9 @@ class StudentHomeScreen extends StatelessWidget {
                     final List<EventModel> upcoming = events
                         .where((EventModel e) => e != heroEvent)
                         .toList(growable: false);
+                    final fallback = _fallbackUpcomingEvents();
+                    final List<EventModel> topEvents =
+                        upcoming.isNotEmpty ? upcoming : fallback;
 
                     return Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -134,25 +182,22 @@ class StudentHomeScreen extends StatelessWidget {
                           event: heroEvent,
                         ),
                         const SizedBox(height: 32),
-                        _buildUpcomingHeader(context),
-                        const SizedBox(height: 16),
-                        if (upcoming.isEmpty)
-                          const Text(
-                            'No more upcoming events.',
-                            style: TextStyle(
-                              color: Colors.white70,
-                              fontSize: 13,
-                            ),
-                          )
-                        else
-                          Column(
-                            children: [
-                              for (final EventModel e in upcoming) ...[
-                                _UpcomingEventCard.fromEvent(e),
-                                const SizedBox(height: 16),
-                              ],
-                            ],
-                          ),
+                        _buildCampusEventsSection(),
+                        const SizedBox(height: 32),
+                        TopEventsSection(
+                          title: 'Upcoming Events',
+                          events: topEvents,
+                          limit: 5,
+                          onSeeAllTap: () {
+                            Navigator.of(context).push(
+                              MaterialPageRoute<void>(
+                                builder: (_) => const UpcomingEventsPage(),
+                              ),
+                            );
+                          },
+                        ),
+                        const SizedBox(height: 32),
+                        _buildStaticUpcomingEventsSection(),
                       ],
                     );
                   }
@@ -189,9 +234,7 @@ class StudentHomeScreen extends StatelessWidget {
         GestureDetector(
           onTap: () {
             Navigator.of(context).push(
-              MaterialPageRoute<void>(
-                builder: (_) => const ProfilePage(),
-              ),
+              MaterialPageRoute<void>(builder: (_) => const ProfilePage()),
             );
           },
           child: Container(
@@ -208,23 +251,56 @@ class StudentHomeScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildUpcomingHeader(BuildContext context) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+  Widget _buildStaticUpcomingEventsSection() {
+    final events = EventDataProvider.getUpcomingEvents(limit: 5);
+
+    if (events.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const Text(
-          'Upcoming Events',
+          'Featured Events',
           style: TextStyle(
             color: Colors.white,
             fontSize: 18,
             fontWeight: FontWeight.w600,
           ),
         ),
-        AppButton(
-          text: 'See All',
-          variant: AppButtonVariant.text,
-          size: AppButtonSize.small,
-          onPressed: () {},
+        const SizedBox(height: 16),
+        ...events.map(
+          (event) => Padding(
+            padding: const EdgeInsets.only(bottom: 12),
+            child: UpcomingEventCard(event: event),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildCampusEventsSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'Upcoming by Campus',
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: 18,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        const SizedBox(height: 16),
+        const CampusEventsWidget(
+          campus: 'Patna',
+          campusDisplayName: 'Patna Campus',
+        ),
+        const SizedBox(height: 16),
+        const CampusEventsWidget(
+          campus: 'Bihta',
+          campusDisplayName: 'Bihta Campus',
         ),
       ],
     );
@@ -277,7 +353,7 @@ class _LiveEventHero extends StatelessWidget {
             right: -60,
             top: -40,
             child: Container(
-              width: 180,
+              width: 240,
               height: 180,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
@@ -289,7 +365,7 @@ class _LiveEventHero extends StatelessWidget {
             left: -40,
             bottom: -40,
             child: Container(
-              width: 160,
+              width: 200,
               height: 160,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
@@ -390,141 +466,6 @@ class _LiveEventHero extends StatelessWidget {
   }
 }
 
-class _UpcomingEventCard extends StatelessWidget {
-  final String day;
-  final String month;
-  final String title;
-  final String location;
-  final String time;
-
-  const _UpcomingEventCard({
-    required this.day,
-    required this.month,
-    required this.title,
-    required this.location,
-    required this.time,
-  });
-
-  factory _UpcomingEventCard.fromEvent(EventModel event) {
-    final DateTime? date = event.startAt;
-    final String day = date != null
-        ? date.day.toString().padLeft(2, '0')
-        : '--';
-    final String month = date != null ? _monthAbbreviation(date.month) : '--';
-
-    String time;
-    if (date != null) {
-      final String h = date.hour.toString().padLeft(2, '0');
-      final String m = date.minute.toString().padLeft(2, '0');
-      time = '$h:$m';
-    } else {
-      time = 'Time TBD';
-    }
-
-    final String location = event.category.isNotEmpty
-        ? event.category
-        : 'Campus';
-
-    return _UpcomingEventCard(
-      day: day,
-      month: month,
-      title: event.title,
-      location: location,
-      time: time,
-    );
-  }
-
-  static String _monthAbbreviation(int month) {
-    const List<String> months = <String>[
-      'JAN',
-      'FEB',
-      'MAR',
-      'APR',
-      'MAY',
-      'JUN',
-      'JUL',
-      'AUG',
-      'SEP',
-      'OCT',
-      'NOV',
-      'DEC',
-    ];
-    if (month < 1 || month > 12) return '--';
-    return months[month - 1];
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: const Color(0xFF0F172A),
-        borderRadius: BorderRadius.circular(24),
-      ),
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-      child: Row(
-        children: [
-          Container(
-            width: 60,
-            height: 72,
-            decoration: BoxDecoration(
-              color: const Color(0xFF1E293B),
-              borderRadius: BorderRadius.circular(18),
-            ),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(
-                  day,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 20,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  month,
-                  style: const TextStyle(
-                    color: Colors.white70,
-                    fontSize: 12,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  location,
-                  style: const TextStyle(color: Colors.white70, fontSize: 13),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  time,
-                  style: const TextStyle(color: Colors.white54, fontSize: 12),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
 class _StudentBottomNavBar extends StatelessWidget {
   const _StudentBottomNavBar({required this.events});
 
@@ -562,9 +503,7 @@ class _StudentBottomNavBar extends StatelessWidget {
             label: 'About Us',
             onTap: () {
               Navigator.of(context).push(
-                MaterialPageRoute<void>(
-                  builder: (_) => const AboutUsPage(),
-                ),
+                MaterialPageRoute<void>(builder: (_) => const AboutUsPage()),
               );
             },
           ),
@@ -573,9 +512,7 @@ class _StudentBottomNavBar extends StatelessWidget {
             label: 'Notice',
             onTap: () {
               Navigator.of(context).push(
-                MaterialPageRoute<void>(
-                  builder: (_) => const NoticePage(),
-                ),
+                MaterialPageRoute<void>(builder: (_) => const NoticePage()),
               );
             },
           ),
