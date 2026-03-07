@@ -16,5 +16,8 @@ class FirestoreProvider {
 
   CollectionReference<Map<String, dynamic>> noticesCollection() =>
       _firestore.collection('notices');
+
+  CollectionReference<Map<String, dynamic>> coordinatorsCollection() =>
+      _firestore.collection('coordinators');
 }
 

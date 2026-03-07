@@ -16,6 +16,8 @@ import 'logic/bloc/event/event_bloc.dart';
 import 'logic/bloc/event/event_event.dart';
 import 'logic/bloc/notice/notice_bloc.dart';
 import 'logic/bloc/notice/notice_event.dart';
+import 'logic/bloc/coordinator/coordinator_bloc.dart';
+import 'logic/bloc/coordinator/coordinator_event.dart';
 import 'logic/bloc/admin/admin_bloc.dart'; // Added AdminBloc import
 import 'logic/cubit/theme_cubit.dart';
 
@@ -62,6 +64,10 @@ class FestApp extends StatelessWidget {
           create: (_) => AdminBloc(
             cloudinaryService: CloudinaryService(),
           ),
+        ),
+        BlocProvider<CoordinatorBloc>(
+          create: (_) =>
+              CoordinatorBloc(useRepository: true)..add(const FetchCoordinators()),
         ),
       ],
       child: BlocBuilder<ThemeCubit, ThemeMode>(
