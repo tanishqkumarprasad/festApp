@@ -56,8 +56,9 @@ class FestApp extends StatelessWidget {
           EventBloc(useRepository: false)..add(const FetchEvents()),
         ),
         BlocProvider<NoticeBloc>(
-          create: (_) =>
-          NoticeBloc(useRepository: false)..add(const FetchNotices()),
+          create: (context) => NoticeBloc(
+            useRepository: true,
+          )..add(const FetchNotices()),
         ),
         // Providing AdminBloc globally fixes the ProviderNotFoundException
         BlocProvider<AdminBloc>(

@@ -20,69 +20,73 @@ class NoticePage extends StatelessWidget {
         elevation: 0,
         iconTheme: const IconThemeData(color: Colors.white),
         title: const Text(
-          'Notices',
+          'Campus Notices',
           style: TextStyle(
             color: Colors.white,
-            fontWeight: FontWeight.w600,
+            fontSize: 22,
+            fontWeight: FontWeight.w700,
+            letterSpacing: 0.5,
           ),
         ),
       ),
       body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-          child: BlocBuilder<NoticeBloc, NoticeState>(
-            builder: (BuildContext context, NoticeState state) {
-              if (state is NoticeLoading) {
-                return const Center(
-                  child: CircularProgressIndicator(),
-                );
-              }
+        child: BlocBuilder<NoticeBloc, NoticeState>(
+          builder: (BuildContext context, NoticeState state) {
+            if (state is NoticeLoading) {
+              return const Center(
+                child: CircularProgressIndicator(color: Colors.blueAccent),
+              );
+            }
 
-              if (state is NoticeError) {
-                return Center(
-                  child: Text(
-                    state.message,
-                    style: const TextStyle(
-                      color: Colors.redAccent,
-                      fontSize: 13,
-                    ),
-                  ),
-                );
-              }
+            if (state is NoticeError) {
+              return Center(
+                child: Text(
+                  state.message,
+                  style: const TextStyle(color: Colors.redAccent, fontSize: 14),
+                ),
+              );
+            }
 
-              if (state is NoticeEmpty) {
+            if (state is NoticeEmpty) {
+              return const Center(
+                child: Text(
+                  'No notices yet. Stay tuned!',
+                  style: TextStyle(color: Colors.white54, fontSize: 15),
+                ),
+              );
+            }
+
+            if (state is NoticeLoaded) {
+              final List<NoticeModel> notices = state.notices;
+              if (notices.isEmpty) {
                 return const Center(
                   child: Text(
                     'No notices yet. Stay tuned!',
-                    style: TextStyle(color: Colors.white70, fontSize: 13),
+                    style: TextStyle(color: Colors.white54, fontSize: 15),
                   ),
                 );
               }
 
-              if (state is NoticeLoaded) {
-                final List<NoticeModel> notices = state.notices;
-                if (notices.isEmpty) {
-                  return const Center(
-                    child: Text(
-                      'No notices yet. Stay tuned!',
-                      style: TextStyle(color: Colors.white70, fontSize: 13),
-                    ),
-                  );
-                }
-
-                return ListView.separated(
+              return RefreshIndicator(
+                color: Colors.blueAccent,
+                backgroundColor: const Color(0xFF1E293B),
+                onRefresh: () async {
+                  // Assuming your bloc responds to a fetch event. Adjust if your event name is different.
+                  // context.read<NoticeBloc>().add(const FetchNotices());
+                },
+                child: ListView.separated(
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
                   itemCount: notices.length,
-                  separatorBuilder: (_, __) => const SizedBox(height: 12),
+                  separatorBuilder: (_, __) => const SizedBox(height: 16),
                   itemBuilder: (BuildContext context, int index) {
-                    final notice = notices[index];
-                    return _NoticeCard(notice: notice);
+                    return _NoticeCard(notice: notices[index]);
                   },
-                );
-              }
+                ),
+              );
+            }
 
-              return const SizedBox.shrink();
-            },
-          ),
+            return const SizedBox.shrink();
+          },
         ),
       ),
     );
@@ -96,89 +100,111 @@ class _NoticeCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final String subtitle = [
-      if (notice.authority.isNotEmpty) notice.authority,
-      if (notice.description.isNotEmpty) notice.description,
-    ].join(' • ');
+    // Format the date nicely to get rid of the ugly decimals
+    final String dateStr = notice.createdAt != null
+        ? "${notice.createdAt!.year}-${notice.createdAt!.month.toString().padLeft(2, '0')}-${notice.createdAt!.day.toString().padLeft(2, '0')}"
+        : "Recently";
 
     return Container(
-      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: const Color(0xFF0F172A),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFF1E293B), width: 1),
+        border: Border.all(color: const Color(0xFF1E293B), width: 1.5),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.2),
+            blurRadius: 8,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Container(
-                width: 40,
-                height: 40,
-                decoration: const BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: Color(0xFF1E293B),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(16),
+          onTap: () {
+            // TODO: Navigate to your NoticeDetailScreen here
+            // Navigator.push(context, MaterialPageRoute(builder: (_) => NoticeDetailScreen(notice: notice)));
+          },
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Professional Mini Thumbnail
+                Container(
+                  width: 65,
+                  height: 65,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF1E293B),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  clipBehavior: Clip.antiAlias,
+                  child: notice.imageUrl.isNotEmpty
+                      ? Image.network(
+                    notice.imageUrl,
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) =>
+                    const Icon(Icons.image_not_supported, color: Colors.white38),
+                  )
+                      : const Center(
+                    child: Icon(Icons.campaign_rounded, color: Colors.blueAccent, size: 32),
+                  ),
                 ),
-                child: const Icon(
-                  Icons.notifications_active_outlined,
-                  color: Colors.white,
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      notice.subject.isNotEmpty ? notice.subject : 'Notice',
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 15,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    if (subtitle.isNotEmpty) ...[
-                      const SizedBox(height: 4),
+                const SizedBox(width: 16),
+
+                // Text Content
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
                       Text(
-                        subtitle,
+                        notice.eventName.isNotEmpty ? notice.eventName : 'Campus Event',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          letterSpacing: 0.3,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        notice.otherDetails.isNotEmpty
+                            ? notice.otherDetails
+                            : 'Tap to view details about this event.',
                         style: const TextStyle(
                           color: Colors.white70,
-                          fontSize: 12,
+                          fontSize: 13,
+                          height: 1.4,
                         ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(height: 12),
+                      Row(
+                        children: [
+                          const Icon(Icons.access_time_rounded, size: 14, color: Colors.blueAccent),
+                          const SizedBox(width: 6),
+                          Text(
+                            'Posted on $dateStr',
+                            style: const TextStyle(
+                              color: Colors.blueAccent,
+                              fontSize: 12,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ],
                       ),
                     ],
-                  ],
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
-          if (notice.content.isNotEmpty &&
-              notice.contentType == NoticeContentTypeModel.text) ...[
-            const SizedBox(height: 8),
-            Text(
-              notice.content,
-              style: const TextStyle(
-                color: Colors.white70,
-                fontSize: 13,
-              ),
-            ),
-          ],
-          if (notice.createdAt != null) ...[
-            const SizedBox(height: 8),
-            Text(
-              'Posted on ${notice.createdAt}',
-              style: const TextStyle(
-                color: Colors.white54,
-                fontSize: 11,
-              ),
-            ),
-          ],
-        ],
+        ),
       ),
     );
   }
 }
-
-
