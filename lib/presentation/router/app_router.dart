@@ -5,12 +5,13 @@ import '../screens/auth/signuppage.dart';
 import '../screens/home/admin_home_screen.dart';
 import '../screens/home/homescreen.dart';
 import '../screens/student/upcoming_events_page.dart';
+import '../screens/splash/splash_screen.dart';
 import 'auth_guard.dart';
 
 class AppRouter {
+  static const String splash = '/';
   static const String choice = '/choice';
   static const String roleSelection = choice;
-  static const String legacyRoot = '/';
   static const String login = '/login';
   static const String signup = '/signup';
   static const String home = '/home';
@@ -19,7 +20,8 @@ class AppRouter {
 
   static Route<dynamic> generateRoute(RouteSettings settings) {
     switch (settings.name) {
-      case legacyRoot:
+      case splash:
+        return MaterialPageRoute(builder: (_) => const SplashScreen());
       case roleSelection:
         return MaterialPageRoute(builder: (_) => const RoleSelectionPage());
       case login:
@@ -37,10 +39,8 @@ class AppRouter {
         );
       case adminHome:
         return MaterialPageRoute(
-          builder: (_) => const AuthGuard(
-            requiredRole: 'admin',
-            child: AdminHomeScreen(),
-          ),
+          builder: (_) =>
+              const AuthGuard(requiredRole: 'admin', child: AdminHomeScreen()),
         );
       case upcomingEvents:
         return MaterialPageRoute(builder: (_) => const UpcomingEventsPage());
@@ -53,15 +53,16 @@ class AppRouter {
     }
   }
 
-  // Navigation helpers
-  static void navigateToRoleSelection(BuildContext context) {
-    navigateToChoice(context);
-  }
+  // --- RESTORED NAVIGATION HELPERS ---
 
   static void navigateToChoice(BuildContext context) {
     Navigator.of(
       context,
     ).pushNamedAndRemoveUntil(roleSelection, (route) => false);
+  }
+
+  static void navigateToRoleSelection(BuildContext context) {
+    navigateToChoice(context);
   }
 
   static void navigateToLogin(BuildContext context, String role) {
@@ -78,10 +79,9 @@ class AppRouter {
 
   static void navigateToHome(BuildContext context, String role) {
     if (role == 'admin') {
-      Navigator.of(context).pushNamedAndRemoveUntil(
-        adminHome,
-        (route) => false,
-      );
+      Navigator.of(
+        context,
+      ).pushNamedAndRemoveUntil(adminHome, (route) => false);
     } else {
       Navigator.of(context).pushNamedAndRemoveUntil(
         home,
