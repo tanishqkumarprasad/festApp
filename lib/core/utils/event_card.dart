@@ -17,7 +17,7 @@ class EventCard extends StatelessWidget {
   final VoidCallback? onRulebookTap;
 
   const EventCard({
-    Key? key,
+    super.key,
     required this.eventName,
     required this.eventImage,
     required this.campus,
@@ -30,7 +30,7 @@ class EventCard extends StatelessWidget {
     this.onTap,
     this.onRegistrationTap,
     this.onRulebookTap,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

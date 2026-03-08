@@ -1,55 +1,72 @@
-import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
 
-// These must match your file names exactly
-import 'firebase_options.dart';
 import 'logic/bloc/auth/auth_bloc.dart';
 import 'logic/bloc/auth/auth_event.dart';
-import 'presentation/router/app_router.dart';
 
-Future<void> main() async {
-  print("APP_DEBUG: Starting main()");
-  WidgetsFlutterBinding.ensureInitialized();
+import 'logic/bloc/event/event_bloc.dart';
+import 'logic/bloc/event/event_event.dart';
 
-  print("APP_DEBUG: Loading .env");
-  try {
-    await dotenv.load(fileName: ".env");
-    print("APP_DEBUG: .env Loaded Successfully");
-  } catch (e) {
-    print("APP_DEBUG: .env Error: $e");
-  }
+import 'logic/bloc/notice/notice_bloc.dart';
+import 'logic/bloc/notice/notice_event.dart';
 
-  print("APP_DEBUG: Initializing Firebase");
-  try {
-    await Firebase.initializeApp(
-      options: DefaultFirebaseOptions.currentPlatform,
-    );
-    print("APP_DEBUG: Firebase Success");
-  } catch (e) {
-    print("APP_DEBUG: Firebase Crash: $e");
-  }
+import 'logic/bloc/admin/admin_bloc.dart';
 
-  runApp(const FestApp());
+import 'logic/bloc/coordinator/coordinator_bloc.dart';
+import 'logic/bloc/coordinator/coordinator_event.dart';
+
+import 'logic/cubit/theme_cubit.dart';
+
+import 'core/router/app_router.dart';
+import 'data/services/cloudinary_service.dart';
+
+void main() {
+  runApp(const MyApp());
 }
 
-class FestApp extends StatelessWidget {
-  const FestApp({super.key});
+class MyApp extends StatelessWidget {
+  const MyApp({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider(
-      create: (context) => AuthBloc()..add(const AppStarted()),
-      child: MaterialApp(
-        title: 'Pratibimb',
-        debugShowCheckedModeBanner: false,
-        theme: ThemeData(
-          primaryColor: const Color(0xFFE53935), // Matching your TATVA logo red
-          useMaterial3: true,
+    return MultiBlocProvider(
+      providers: [
+        BlocProvider<AuthBloc>(
+          create: (_) => AuthBloc()..add(const AppStarted()),
         ),
-        initialRoute: AppRouter.splash,
-        onGenerateRoute: AppRouter.generateRoute,
+        BlocProvider<ThemeCubit>(create: (_) => ThemeCubit()),
+        BlocProvider<EventBloc>(
+          create: (_) =>
+              EventBloc(useRepository: false)..add(const FetchEvents()),
+        ),
+        BlocProvider<NoticeBloc>(
+          create: (_) =>
+              NoticeBloc(useRepository: true)..add(const FetchNotices()),
+        ),
+        BlocProvider<AdminBloc>(
+          create: (_) => AdminBloc(cloudinaryService: CloudinaryService()),
+        ),
+        BlocProvider<CoordinatorBloc>(
+          create: (_) =>
+              CoordinatorBloc(useRepository: true)
+                ..add(const FetchCoordinators()),
+        ),
+      ],
+      child: BlocBuilder<ThemeCubit, ThemeMode>(
+        builder: (context, mode) {
+          return MaterialApp(
+            title: 'Fest App',
+            debugShowCheckedModeBanner: false,
+            theme: ThemeData(
+              primaryColor: const Color(0xFFE53935),
+              useMaterial3: true,
+            ),
+            darkTheme: ThemeData.dark(),
+            themeMode: mode,
+            initialRoute: AppRouter.splash,
+            onGenerateRoute: AppRouter.generateRoute,
+          );
+        },
       ),
     );
   }

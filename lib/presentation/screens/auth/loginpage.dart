@@ -288,6 +288,8 @@ class _LoginPageState extends State<LoginPage> {
   Future<void> _handleAuthenticatedState(Authenticated state) async {
     if (_handlingPostLogin) return;
     _handlingPostLogin = true;
+    final messenger = ScaffoldMessenger.of(context);
+    final navigator = Navigator.of(context);
     try {
       final auth = FirebaseAuth.instance;
       final email = (state.user.email ?? '').trim().toLowerCase();
@@ -298,47 +300,65 @@ class _LoginPageState extends State<LoginPage> {
         if (!isAdminUser) {
           await auth.signOut();
           if (!mounted) return;
-          ScaffoldMessenger.of(context).showSnackBar(
+          messenger.showSnackBar(
             const SnackBar(
               content: Text('Student accounts cannot login from admin portal'),
               backgroundColor: Colors.red,
             ),
           );
-          AppRouter.navigateToLogin(context, 'student');
+          navigator.pushNamedAndRemoveUntil(
+            AppRouter.login,
+            (route) => false,
+            arguments: {'role': 'student'},
+          );
           return;
         }
 
         if (email != _adminEmail.toLowerCase()) {
           await auth.signOut();
           if (!mounted) return;
-          ScaffoldMessenger.of(context).showSnackBar(
+          messenger.showSnackBar(
             const SnackBar(
               content: Text('Only SAC@nitp.ac.in can login from admin portal'),
               backgroundColor: Colors.red,
             ),
           );
-          AppRouter.navigateToChoice(context);
+          navigator.pushNamedAndRemoveUntil(
+            AppRouter.roleSelection,
+            (route) => false,
+          );
           return;
         }
 
-        AppRouter.navigateToHome(context, 'admin');
+        navigator.pushNamedAndRemoveUntil(
+          AppRouter.adminHome,
+          (route) => false,
+        );
         return;
       }
 
       if (email == _adminEmail.toLowerCase() || isAdminUser) {
         await auth.signOut();
         if (!mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
+        messenger.showSnackBar(
           const SnackBar(
             content: Text('Admin must login from admin portal'),
             backgroundColor: Colors.red,
           ),
         );
-        AppRouter.navigateToLogin(context, 'admin');
+        navigator.pushNamedAndRemoveUntil(
+          AppRouter.login,
+          (route) => false,
+          arguments: {'role': 'admin'},
+        );
         return;
       }
 
-      AppRouter.navigateToHome(context, 'student');
+      navigator.pushNamedAndRemoveUntil(
+        AppRouter.home,
+        (route) => false,
+        arguments: {'role': 'student'},
+      );
     } finally {
       _handlingPostLogin = false;
     }

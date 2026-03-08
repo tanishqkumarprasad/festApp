@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:url_launcher/url_launcher.dart';
 
-import '../../../data/models/event_model.dart';
-import '../../../logic/bloc/event/event_bloc.dart';
-import '../../../logic/bloc/event/event_state.dart';
+import '../../../data/models/upcoming_event_model.dart';
+import '../../../data/providers/event_data_provider.dart';
 
 class UpcomingEventsPage extends StatefulWidget {
   const UpcomingEventsPage({super.key});
@@ -13,122 +12,72 @@ class UpcomingEventsPage extends StatefulWidget {
 }
 
 class _UpcomingEventsPageState extends State<UpcomingEventsPage> {
-  static const _clubs = <String>[
-    'hackslash',
-    'vista',
-    'expresso',
-    'tesla',
-    'natvansh',
-    'total chaos',
-    'ieee',
-    'saptak',
-    'incubation center',
-    'photography and media',
-  ];
+  static const _campuses = <String>['All', 'Patna', 'Bihta'];
 
-  String? _selectedClub; // null = All clubs
-  String? _selectedCategory; // null = All categories (sports / cultural)
+  String _selectedCampus = 'All';
 
-  List<EventModel> _getFilteredEvents(List<EventModel> events) {
+  List<UpcomingEventModel> _getFilteredEvents() {
+    final events = EventDataProvider.allEvents;
     final now = DateTime.now();
 
     final filtered = events.where((event) {
-      final status = event.status.trim().toLowerCase();
-      final isUpcomingStatus = status == 'upcoming';
-      final isFutureDate = event.startAt == null || event.startAt!.isAfter(now);
-      final isUpcoming = isUpcomingStatus || isFutureDate;
+      final isFutureDate = event.eventDate.isAfter(now);
+      final matchesCampus =
+          _selectedCampus == 'All' || event.campus == _selectedCampus;
 
-      final eventClub = event.club.trim().toLowerCase();
-      final matchesClub =
-          _selectedClub == null || eventClub == _selectedClub!.toLowerCase();
-
-      final category = event.category.trim().toLowerCase();
-      final matchesCategory =
-          _selectedCategory == null ||
-          category == _selectedCategory!.toLowerCase();
-
-      return isUpcoming && matchesClub && matchesCategory;
+      return isFutureDate && matchesCampus;
     }).toList();
 
-    filtered.sort((a, b) {
-      final aStart = a.startAt ?? DateTime.now();
-      final bStart = b.startAt ?? DateTime.now();
-      return aStart.compareTo(bStart);
-    });
+    filtered.sort((a, b) => a.eventDate.compareTo(b.eventDate));
 
     return filtered;
   }
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
-    return BlocBuilder<EventBloc, EventState>(
-      builder: (context, state) {
-        final events = state is EventLoaded ? state.events : <EventModel>[];
-
-        return Scaffold(
-
-          appBar: AppBar(title: const Text('Upcoming Events')),
-          body: Column(
-            children: [
-              const SizedBox(height: 8),
-              _buildClubFilterRow(theme),
-              const SizedBox(height: 8),
-              _buildCategoryFilterRow(theme),
-              const Divider(height: 1),
-              Expanded(
-                child: _getFilteredEvents(events).isEmpty
-                    ? const Center(child: Text('No upcoming events found.'))
-                    : ListView.builder(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 12,
-                        ),
-                        itemCount: _getFilteredEvents(events).length,
-                        itemBuilder: (context, index) {
-                          final event = _getFilteredEvents(events)[index];
-                          return _EventCard(event: event);
-                        },
-                      ),
-              ),
-            ],
+    return Scaffold(
+      appBar: AppBar(title: const Text('Upcoming Events')),
+      body: Column(
+        children: [
+          const SizedBox(height: 8),
+          _buildCampusFilterRow(),
+          const Divider(height: 1),
+          Expanded(
+            child: _getFilteredEvents().isEmpty
+                ? const Center(child: Text('No upcoming events found.'))
+                : ListView.builder(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 12,
+                    ),
+                    itemCount: _getFilteredEvents().length,
+                    itemBuilder: (context, index) {
+                      final event = _getFilteredEvents()[index];
+                      return _EventCard(event: event);
+                    },
+                  ),
           ),
-        );
-      },
+        ],
+      ),
     );
   }
 
-  Widget _buildClubFilterRow(ThemeData theme) {
+  Widget _buildCampusFilterRow() {
     return SizedBox(
       height: 56,
       child: ListView(
         scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.symmetric(horizontal: 12),
         children: [
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 4),
-            child: ChoiceChip(
-              label: const Text('All Clubs'),
-              selected: _selectedClub == null,
-              onSelected: (_) {
-                setState(() {
-                  _selectedClub = null;
-                });
-              },
-            ),
-          ),
-          ..._clubs.map(
-            (club) => Padding(
+          ..._campuses.map(
+            (campus) => Padding(
               padding: const EdgeInsets.symmetric(horizontal: 4),
               child: ChoiceChip(
-                label: Text(_capitalizeWords(club)),
-                selected:
-                    _selectedClub != null &&
-                    _selectedClub == club.toLowerCase(),
+                label: Text(campus),
+                selected: _selectedCampus == campus,
                 onSelected: (_) {
                   setState(() {
-                    _selectedClub = club.toLowerCase();
+                    _selectedCampus = campus;
                   });
                 },
               ),
@@ -138,72 +87,40 @@ class _UpcomingEventsPageState extends State<UpcomingEventsPage> {
       ),
     );
   }
-
-  Widget _buildCategoryFilterRow(ThemeData theme) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-      child: Row(
-        children: [
-          Text('Category:', style: theme.textTheme.bodyMedium),
-          const SizedBox(width: 8),
-          ChoiceChip(
-            label: const Text('All'),
-            selected: _selectedCategory == null,
-            onSelected: (_) {
-              setState(() {
-                _selectedCategory = null;
-              });
-            },
-          ),
-          const SizedBox(width: 8),
-          ChoiceChip(
-            label: const Text('Sports'),
-            selected: _selectedCategory == 'sports',
-            onSelected: (_) {
-              setState(() {
-                _selectedCategory = 'sports';
-              });
-            },
-          ),
-          const SizedBox(width: 8),
-          ChoiceChip(
-            label: const Text('Cultural'),
-            selected: _selectedCategory == 'cultural',
-            onSelected: (_) {
-              setState(() {
-                _selectedCategory = 'cultural';
-              });
-            },
-          ),
-        ],
-      ),
-    );
-  }
-
-  String _capitalizeWords(String value) {
-    return value
-        .split(' ')
-        .where((part) => part.isNotEmpty)
-        .map(
-          (part) =>
-              part[0].toUpperCase() +
-              (part.length > 1 ? part.substring(1) : ''),
-        )
-        .join(' ');
-  }
 }
 
 class _EventCard extends StatelessWidget {
   const _EventCard({required this.event});
 
-  final EventModel event;
+  final UpcomingEventModel event;
+
+  Future<void> _launchRegistration() async {
+    final url = Uri.parse(event.registrationLink);
+    if (await canLaunchUrl(url)) {
+      await launchUrl(url, mode: LaunchMode.externalApplication);
+    }
+  }
+
+  String _formatDate(DateTime date) {
+    final months = [
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
+    ];
+    return '${date.day} ${months[date.month - 1]}, ${date.year}';
+  }
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
-    final dateText = _formatDateRange(event.startAt, event.endAt);
-
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -217,76 +134,50 @@ class _EventCard extends StatelessWidget {
               children: [
                 Expanded(
                   child: Text(
-                    event.title,
-                    style: theme.textTheme.titleMedium?.copyWith(
+                    event.eventName,
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.w600,
                     ),
                   ),
                 ),
                 const SizedBox(width: 8),
                 Chip(
-                  label: Text(
-                    event.category[0].toUpperCase() +
-                        event.category.substring(1).toLowerCase(),
-                  ),
+                  label: Text(event.campus),
                   visualDensity: VisualDensity.compact,
                 ),
               ],
             ),
-            const SizedBox(height: 4),
-            Text(
-              _capitalize(event.club),
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: theme.colorScheme.primary,
-                fontWeight: FontWeight.w500,
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                const Icon(Icons.calendar_today, size: 16),
+                const SizedBox(width: 4),
+                Text(
+                  _formatDate(event.eventDate),
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: _launchRegistration,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF4F46E5),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+                child: const Text(
+                  'Register Now',
+                  style: TextStyle(color: Colors.white),
+                ),
               ),
             ),
-            if (dateText != null) ...[
-              const SizedBox(height: 4),
-              Row(
-                children: [
-                  const Icon(Icons.access_time, size: 16),
-                  const SizedBox(width: 4),
-                  Text(dateText, style: theme.textTheme.bodySmall),
-                ],
-              ),
-            ],
           ],
         ),
       ),
     );
-  }
-
-  static String? _formatDateRange(DateTime? start, DateTime? end) {
-    if (start == null && end == null) return null;
-    if (start == null) return _formatSingle(end!);
-    if (end == null) return _formatSingle(start);
-    final startText = _formatSingle(start);
-    final endText = _formatSingle(end);
-    if (start.year == end.year &&
-        start.month == end.month &&
-        start.day == end.day) {
-      return '$startText - ${_formatTime(end)}';
-    }
-    return '$startText → $endText';
-  }
-
-  static String _formatSingle(DateTime date) {
-    final day = date.day.toString().padLeft(2, '0');
-    final month = date.month.toString().padLeft(2, '0');
-    final year = date.year.toString();
-    final time = _formatTime(date);
-    return '$day/$month/$year, $time';
-  }
-
-  static String _formatTime(DateTime date) {
-    final hour = date.hour.toString().padLeft(2, '0');
-    final minute = date.minute.toString().padLeft(2, '0');
-    return '$hour:$minute';
-  }
-
-  static String _capitalize(String value) {
-    if (value.isEmpty) return value;
-    return value[0].toUpperCase() + value.substring(1).toLowerCase();
   }
 }
