@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-
-import '../../../core/constants/app_colors.dart';
 import '../../../data/models/notice_model.dart';
 import '../../../logic/bloc/notice/notice_bloc.dart';
 import '../../../logic/bloc/notice/notice_state.dart';
@@ -112,7 +110,7 @@ class _NoticeCard extends StatelessWidget {
         border: Border.all(color: const Color(0xFF1E293B), width: 1.5),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.2),
+            color: Colors.black.withValues(alpha: 0.2),
             blurRadius: 8,
             offset: const Offset(0, 4),
           ),
