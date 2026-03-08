@@ -55,25 +55,25 @@ class EventCard extends StatelessWidget {
                 color: Colors.grey[200],
                 child: eventImage.isNotEmpty
                     ? Image.network(
-                        eventImage,
-                        fit: BoxFit.cover,
-                        errorBuilder: (context, error, stackTrace) {
-                          return Center(
-                            child: Icon(
-                              Icons.image_not_supported,
-                              color: Colors.grey[400],
-                              size: 48,
-                            ),
-                          );
-                        },
-                      )
-                    : Center(
-                        child: Icon(
-                          Icons.image,
-                          color: Colors.grey[400],
-                          size: 48,
-                        ),
+                  eventImage,
+                  fit: BoxFit.cover,
+                  errorBuilder: (context, error, stackTrace) {
+                    return Center(
+                      child: Icon(
+                        Icons.image_not_supported,
+                        color: Colors.grey[400],
+                        size: 48,
                       ),
+                    );
+                  },
+                )
+                    : Center(
+                  child: Icon(
+                    Icons.image,
+                    color: Colors.grey[400],
+                    size: 48,
+                  ),
+                ),
               ),
             ),
 
@@ -257,6 +257,6 @@ class EventCard extends StatelessWidget {
     // In production, use url_launcher package:
     // final Uri launchUri = Uri(scheme: 'tel', path: phoneNumber);
     // launchUrl(launchUri);
-    print('Phone: $phoneNumber');
+    debugPrint('Phone: $phoneNumber'); // ✅ fixed
   }
 }

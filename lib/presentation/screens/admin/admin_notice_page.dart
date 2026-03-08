@@ -254,7 +254,7 @@ class _AdminNoticePageState extends State<AdminNoticePage> {
         children: [
           Container(
             width: 40, height: 40,
-            decoration: BoxDecoration(shape: BoxShape.circle, color: isSelected ? AppColors.primary.withOpacity(0.2) : const Color(0xFF1E293B)),
+            decoration: BoxDecoration(shape: BoxShape.circle, color: isSelected ? AppColors.primary.withValues(alpha: 0.2) : const Color(0xFF1E293B)),
             child: Icon(icon, color: isSelected ? AppColors.primary : Colors.white, size: 22),
           ),
           const SizedBox(width: 12),
