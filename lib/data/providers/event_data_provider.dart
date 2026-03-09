@@ -46,14 +46,32 @@ class EventDataProvider {
       Coordinator(name: 'Dishant', role: 'Coordinator'),
       Coordinator(name: 'Prajwal', role: 'Co-coordinator'),
     ],
-    'Indoor sports': [
-      Coordinator(name: 'Daksh', role: 'Coordinator'),
-      Coordinator(name: 'Archi', role: 'Co-coordinator'),
+    'Yogasana Competition': [
+      Coordinator(name: 'Sania Kumari', role: 'Coordinator'),
+      Coordinator(name: 'Rahul Kumar', role: 'Co-coordinator'),
+    ],
+    'Darpan': [
+      Coordinator(name: 'Aditi Rao', role: 'Coordinator'),
+      Coordinator(name: 'Jyoti Kumari', role: 'Co-coordinator'),
+    ],
+    'Twig n Twine': [
+      Coordinator(name: 'Aparna', role: 'Coordinator'),
+      Coordinator(name: 'Deepali', role: 'Co-coordinator'),
+      Coordinator(name: 'Satyam', role: 'Co-coordinator'),
+    ],
+    'Green Graffiti': [
+      Coordinator(name: 'Aparna', role: 'Coordinator'),
+      Coordinator(name: 'Deepali', role: 'Co-coordinator'),
+      Coordinator(name: 'Satyam', role: 'Co-coordinator'),
+    ],
+    'puzzle pulse': [
+      Coordinator(name: 'Aparna', role: 'Coordinator'),
+      Coordinator(name: 'Deepali', role: 'Co-coordinator'),
+      Coordinator(name: 'Satyam', role: 'Co-coordinator'),
     ],
   };
 
   static List<Coordinator> _getCoordinatorsForEvent(String eventName) {
-    // Try exact match first
     if (_coordinatorsMap.containsKey(eventName)) {
       return _coordinatorsMap[eventName]!;
     }
