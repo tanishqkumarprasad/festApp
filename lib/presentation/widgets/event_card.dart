@@ -8,10 +8,16 @@ class EventCard extends StatelessWidget {
 
   final UpcomingEventModel event;
 
-  Future<void> _launchRegistration() async {
+  Future<void> _launchRegistration(BuildContext context) async {
     final url = Uri.parse(event.registrationLink);
-    if (await canLaunchUrl(url)) {
+    try {
       await launchUrl(url, mode: LaunchMode.externalApplication);
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Could not open registration link')),
+        );
+      }
     }
   }
 
@@ -98,7 +104,7 @@ class EventCard extends StatelessWidget {
               width: double.infinity,
               child: ElevatedButton(
                 onPressed: event.registrationLink.isNotEmpty
-                    ? _launchRegistration
+                    ? () => _launchRegistration(context)
                     : null,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF4F46E5),

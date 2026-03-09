@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../core/utils/button.dart';
 import '../../../data/models/event_model.dart';
+import '../../../data/providers/event_data_provider.dart';
 
 /// Reusable section for displaying top/upcoming events with a header and optional "See All" link.
 class TopEventsSection extends StatelessWidget {
@@ -107,6 +108,11 @@ class _TopEventCard extends StatelessWidget {
       time = '$h:$m';
     } else {
       time = 'Time TBD';
+    }
+
+    final coordinators = EventDataProvider.getCoordinatorsForEvent(event.title);
+    if (coordinators.isNotEmpty) {
+      time = coordinators.first.name;
     }
 
     final String location =

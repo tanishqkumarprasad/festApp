@@ -198,6 +198,27 @@ class StudentHomeScreen extends StatelessWidget {
                 },
               ),
               const SizedBox(height: 32),
+              _MessageSection(
+                imagePath: 'assets/images/Director image.jpeg',
+                title: 'Message from the Director’s Desk',
+                designation: 'Dr. PK Jain, Director, NIT Patna',
+                message:
+                    'At our institute, we believe that true education extends beyond classrooms. Cultural, sports, and literary activities play a vital role in shaping confident, creative, and responsible individuals. The Student Activity Centre app is a step towards encouraging students to explore their talents, participate actively, and grow through diverse learning experiences.',
+                backgroundColor: cardBackground,
+                pillBackground: pillBackground,
+              ),
+              const SizedBox(height: 32),
+              _MessageSection(
+                imagePath: 'assets/images/DSW image1.jpeg',
+                title: 'Message from Fest President',
+                designation: 'Dr. Prabhat Kumar, Dean Student Welfare',
+                message:
+                    'It gives me great pleasure to see the Student Activity Centre App becoming an integral part of our fest. The app has enabled seamless event updates and registrations, making participation easier for everyone. It reflects our commitment to creating an organized, engaging, and vibrant platform for students to celebrate talent and teamwork.',
+                backgroundColor: cardBackground,
+                pillBackground: pillBackground,
+              ),
+              const SizedBox(height: 32),
+
             ],
           ),
         ),
@@ -284,19 +305,8 @@ class _LiveEventHero extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final bool showLive = event?.isLive ?? true;
-    final String title;
-    final String subtitle;
-
-    if (isLoading) {
-      title = 'Loading event...';
-      subtitle = '';
-    } else if (event != null) {
-      title = event!.title.isNotEmpty ? event!.title : 'Live event';
-      subtitle = _subtitleForEvent(event!);
-    } else {
-      title = "Pratibimb '26";
-      subtitle = 'Stay tuned for upcoming events';
-    }
+    final String title = 'Mixed Cricket';
+    final String subtitle = 'at venue SAC ground';
 
     return Container(
       height: 220,
@@ -383,7 +393,7 @@ class _LiveEventHero extends StatelessWidget {
                   ),
                 const Spacer(),
                 AppButton(
-                  text: 'Join',
+                  text: 'Reach now',
                   variant: AppButtonVariant.secondary,
                   size: AppButtonSize.medium,
                   width: 120,
@@ -524,6 +534,92 @@ class _NavItem extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       child: content,
+    );
+  }
+}
+
+class _MessageSection extends StatelessWidget {
+  final String imagePath;
+  final String title;
+  final String designation;
+  final String message;
+  final Color backgroundColor;
+  final Color pillBackground;
+
+  const _MessageSection({
+    required this.imagePath,
+    required this.title,
+    required this.designation,
+    required this.message,
+    required this.backgroundColor,
+    required this.pillBackground,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        color: backgroundColor,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: pillBackground, width: 1),
+      ),
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 64,
+                height: 64,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  border: Border.all(color: pillBackground, width: 2),
+                  image: DecorationImage(
+                    image: AssetImage(imagePath),
+                    fit: BoxFit.cover,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: const TextStyle(
+                        color: AppColors.surface,
+                        fontSize: 18,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      designation,
+                      style: const TextStyle(
+                        color: Colors.white70,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          Text(
+            message,
+            style: const TextStyle(
+              color: Colors.white60,
+              fontSize: 14,
+              height: 1.5,
+              fontWeight: FontWeight.w400,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

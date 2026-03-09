@@ -71,7 +71,7 @@ class EventDataProvider {
     ],
   };
 
-  static List<Coordinator> _getCoordinatorsForEvent(String eventName) {
+  static List<Coordinator> getCoordinatorsForEvent(String eventName) {
     if (_coordinatorsMap.containsKey(eventName)) {
       return _coordinatorsMap[eventName]!;
     }
@@ -99,91 +99,91 @@ class EventDataProvider {
       eventDate: DateTime(2026, 03, 16),
       registrationLink:
           'https://docs.google.com/forms/d/e/1FAIpQLSddng9-wlo8EjoDU_QOyL42W7ol9nkhnHoJMNwAz-VBaEAmQQ/viewform',
-      coordinators: _getCoordinatorsForEvent('Raaga'),
+      coordinators: getCoordinatorsForEvent('Raaga'),
     ),
     UpcomingEventModel(
       eventName: 'Twig n Twine',
       campus: 'Patna',
       eventDate: DateTime(2026, 03, 30),
       registrationLink: 'https://forms.gle/snKZmaidRPJmJxjDA',
-      coordinators: _getCoordinatorsForEvent('Twig n Twine'),
+      coordinators: getCoordinatorsForEvent('Twig n Twine'),
     ),
     UpcomingEventModel(
       eventName: 'Green Graffiti',
       campus: 'Patna',
       eventDate: DateTime(2026, 03, 31),
       registrationLink: 'https://forms.gle/seguB9maXBpJm7NR9',
-      coordinators: _getCoordinatorsForEvent('Green Graffiti'),
+      coordinators: getCoordinatorsForEvent('Green Graffiti'),
     ),
     UpcomingEventModel(
       eventName: 'puzzle pulse',
       campus: 'Patna',
       eventDate: DateTime(2026, 04, 01),
       registrationLink: 'https://forms.gle/4YBrkfxqKb8z3yBo6',
-      coordinators: _getCoordinatorsForEvent('puzzle pulse'),
+      coordinators: getCoordinatorsForEvent('puzzle pulse'),
     ),
     UpcomingEventModel(
       eventName: 'KALAKRITI (NO BRUSHES)',
       campus: 'Patna',
       eventDate: DateTime(2026, 03, 21),
       registrationLink: 'https://forms.gle/56kn9pffMRLAa4uh7',
-      coordinators: _getCoordinatorsForEvent('KALAKRITI (NO BRUSHES)'),
+      coordinators: getCoordinatorsForEvent('KALAKRITI (NO BRUSHES)'),
     ),
     UpcomingEventModel(
       eventName: 'KALAKRITI (CLAY MODELLING)',
       campus: 'Patna',
       eventDate: DateTime(2026, 03, 21),
       registrationLink: 'https://forms.gle/nVQqWcmDpNifjoXY8',
-      coordinators: _getCoordinatorsForEvent('KALAKRITI (CLAY MODELLING)'),
+      coordinators: getCoordinatorsForEvent('KALAKRITI (CLAY MODELLING)'),
     ),
     UpcomingEventModel(
       eventName: 'KALAKRITI (TSHIRT PAINTING)',
       campus: 'Patna',
       eventDate: DateTime(2026, 03, 22),
       registrationLink: 'https://forms.gle/dBKCRDv1xEcEBpbh9',
-      coordinators: _getCoordinatorsForEvent('KALAKRITI (TSHIRT PAINTING)'),
+      coordinators: getCoordinatorsForEvent('KALAKRITI (TSHIRT PAINTING)'),
     ),
     UpcomingEventModel(
       eventName: 'KALAKRITI (FACE PAINTING)',
       campus: 'Patna',
       eventDate: DateTime(2026, 03, 22),
       registrationLink: 'https://forms.gle/cX1it1wFoXbHJyry7',
-      coordinators: _getCoordinatorsForEvent('KALAKRITI (FACE PAINTING)'),
+      coordinators: getCoordinatorsForEvent('KALAKRITI (FACE PAINTING)'),
     ),
     UpcomingEventModel(
       eventName: 'Pratibimb',
       campus: 'Patna',
       eventDate: DateTime(2026, 04, 04),
       registrationLink: 'https://forms.gle/Rf5rnp2HQX6FYwtK8',
-      coordinators: _getCoordinatorsForEvent('Pratibimb'),
+      coordinators: getCoordinatorsForEvent('Pratibimb'),
     ),
     UpcomingEventModel(
       eventName: 'Darpan',
       campus: 'Patna',
       eventDate: DateTime(2026, 04, 04),
       registrationLink: 'https://forms.gle/BFaiko5NjuQUUmJAA',
-      coordinators: _getCoordinatorsForEvent('Darpan'),
+      coordinators: getCoordinatorsForEvent('Darpan'),
     ),
     UpcomingEventModel(
       eventName: 'Yogasana Competition',
       campus: 'Patna',
       eventDate: DateTime(2026, 03, 18),
       registrationLink: 'https://forms.gle/9nSsDJTfDG64D4ad6',
-      coordinators: _getCoordinatorsForEvent('Yogasana Competition'),
+      coordinators: getCoordinatorsForEvent('Yogasana Competition'),
     ),
     UpcomingEventModel(
       eventName: 'Graphika',
       campus: 'Patna',
       eventDate: DateTime(2026, 03, 22),
       registrationLink: 'https://forms.gle/uAfoG8Rod9upShft5',
-      coordinators: _getCoordinatorsForEvent('Graphika'),
+      coordinators: getCoordinatorsForEvent('Graphika'),
     ),
     UpcomingEventModel(
       eventName: 'Nrityangana',
       campus: 'Patna',
       eventDate: DateTime(2026, 03, 17),
       registrationLink: 'https://forms.gle/fpkUt1GDCatXmgHU8',
-      coordinators: _getCoordinatorsForEvent('Nrityangana'),
+      coordinators: getCoordinatorsForEvent('Nrityangana'),
     ),
     // Bihta Campus Events
     UpcomingEventModel(
@@ -201,35 +201,50 @@ class EventDataProvider {
       campus: 'Bihta',
       eventDate: DateTime(2026, 03, 28),
       registrationLink: '',
-      coordinators: [],
+      coordinators: [
+        Coordinator(name: 'Anurag Mishra', role: 'Coordinator'),
+        Coordinator(name: 'Khushbu Kumari', role: 'Co-coordinator'),
+      ],
     ),
     UpcomingEventModel(
       eventName: 'Back Drawing',
       campus: 'Bihta',
       eventDate: DateTime(2026, 03, 30),
       registrationLink: '',
-      coordinators: [],
+      coordinators: [
+        Coordinator(name: 'Anurag Mishra', role: 'Coordinator'),
+        Coordinator(name: 'Khushbu Kumari', role: 'Co-coordinator'),
+      ],
     ),
     UpcomingEventModel(
       eventName: 'Pre – Sher o Shayari & Poetry',
       campus: 'Bihta',
       eventDate: DateTime(2026, 03, 31),
       registrationLink: '',
-      coordinators: [],
+      coordinators: [
+        Coordinator(name: 'Anurag Mishra', role: 'Coordinator'),
+        Coordinator(name: 'Khushbu Kumari', role: 'Co-coordinator'),
+      ],
     ),
     UpcomingEventModel(
       eventName: 'Hindi Debate',
       campus: 'Bihta',
       eventDate: DateTime(2026, 04, 01),
       registrationLink: '',
-      coordinators: [],
+      coordinators: [
+        Coordinator(name: 'Anurag Mishra', role: 'Coordinator'),
+        Coordinator(name: 'Khushbu Kumari', role: 'Co-coordinator'),
+      ],
     ),
     UpcomingEventModel(
       eventName: 'Final – Sher o Shayari & Poetry',
       campus: 'Bihta',
       eventDate: DateTime(2026, 04, 02),
       registrationLink: '',
-      coordinators: [],
+      coordinators: [
+        Coordinator(name: 'Anurag Mishra', role: 'Coordinator'),
+        Coordinator(name: 'Khushbu Kumari', role: 'Co-coordinator'),
+      ],
     ),
     UpcomingEventModel(
       eventName: 'Pre – Mimicry / MonoAct',
@@ -246,35 +261,50 @@ class EventDataProvider {
       campus: 'Bihta',
       eventDate: DateTime(2026, 03, 28),
       registrationLink: '',
-      coordinators: [],
+      coordinators: [
+        Coordinator(name: 'Anurag Kumar', role: 'Coordinator'),
+        Coordinator(name: 'Tanya Bharti', role: 'Co-coordinator'),
+      ],
     ),
     UpcomingEventModel(
       eventName: 'Pre – Group Act',
       campus: 'Bihta',
       eventDate: DateTime(2026, 03, 28),
       registrationLink: '',
-      coordinators: [],
+      coordinators: [
+        Coordinator(name: 'Anurag Kumar', role: 'Coordinator'),
+        Coordinator(name: 'Tanya Bharti', role: 'Co-coordinator'),
+      ],
     ),
     UpcomingEventModel(
       eventName: 'Final – Mimicry / MonoAct',
       campus: 'Bihta',
       eventDate: DateTime(2026, 04, 03),
       registrationLink: '',
-      coordinators: [],
+      coordinators: [
+        Coordinator(name: 'Anurag Kumar', role: 'Coordinator'),
+        Coordinator(name: 'Tanya Bharti', role: 'Co-coordinator'),
+      ],
     ),
     UpcomingEventModel(
       eventName: 'Final – Standup / StoryTelling',
       campus: 'Bihta',
       eventDate: DateTime(2026, 04, 03),
       registrationLink: '',
-      coordinators: [],
+      coordinators: [
+        Coordinator(name: 'Anurag Kumar', role: 'Coordinator'),
+        Coordinator(name: 'Tanya Bharti', role: 'Co-coordinator'),
+      ],
     ),
     UpcomingEventModel(
       eventName: 'Final – Group Act',
       campus: 'Bihta',
       eventDate: DateTime(2026, 04, 03),
       registrationLink: '',
-      coordinators: [],
+      coordinators: [
+        Coordinator(name: 'Anurag Kumar', role: 'Coordinator'),
+        Coordinator(name: 'Tanya Bharti', role: 'Co-coordinator'),
+      ],
     ),
     UpcomingEventModel(
       eventName: 'Snaprush',
@@ -292,6 +322,7 @@ class EventDataProvider {
       eventDate: DateTime(2026, 03, 29),
       registrationLink: '',
       coordinators: [
+        Coordinator(name: 'Nishant Kumar', role: 'Coordinator'),
         Coordinator(name: 'Shubham Sinha', role: 'Co-coordinator'),
       ],
     ),
@@ -310,14 +341,20 @@ class EventDataProvider {
       campus: 'Bihta',
       eventDate: DateTime(2026, 03, 30),
       registrationLink: '',
-      coordinators: [],
+      coordinators: [
+        Coordinator(name: 'Sarthak Rajan', role: 'Coordinator'),
+        Coordinator(name: 'Yaksh Bariya', role: 'Co-coordinator'),
+      ],
     ),
     UpcomingEventModel(
       eventName: 'Final – Solo Singing',
       campus: 'Bihta',
       eventDate: DateTime(2026, 04, 02),
       registrationLink: '',
-      coordinators: [],
+      coordinators: [
+        Coordinator(name: 'Sarthak Rajan', role: 'Coordinator'),
+        Coordinator(name: 'Yaksh Bariya', role: 'Co-coordinator'),
+      ],
     ),
     UpcomingEventModel(
       eventName: 'Pre – Solo Dance',
@@ -334,28 +371,40 @@ class EventDataProvider {
       campus: 'Bihta',
       eventDate: DateTime(2026, 03, 27),
       registrationLink: '',
-      coordinators: [],
+      coordinators: [
+        Coordinator(name: 'Talachintala Yashwanth', role: 'Coordinator'),
+        Coordinator(name: 'Sai Koushik', role: 'Co-coordinator'),
+      ],
     ),
     UpcomingEventModel(
       eventName: 'Impromptu',
       campus: 'Bihta',
       eventDate: DateTime(2026, 03, 29),
       registrationLink: '',
-      coordinators: [],
+      coordinators: [
+        Coordinator(name: 'Talachintala Yashwanth', role: 'Coordinator'),
+        Coordinator(name: 'Sai Koushik', role: 'Co-coordinator'),
+      ],
     ),
     UpcomingEventModel(
       eventName: 'Final – Solo Dance',
       campus: 'Bihta',
       eventDate: DateTime(2026, 04, 02),
       registrationLink: '',
-      coordinators: [],
+      coordinators: [
+        Coordinator(name: 'Talachintala Yashwanth', role: 'Coordinator'),
+        Coordinator(name: 'Sai Koushik', role: 'Co-coordinator'),
+      ],
     ),
     UpcomingEventModel(
       eventName: 'Final – Duet Dance',
       campus: 'Bihta',
       eventDate: DateTime(2026, 04, 02),
       registrationLink: '',
-      coordinators: [],
+      coordinators: [
+        Coordinator(name: 'Talachintala Yashwanth', role: 'Coordinator'),
+        Coordinator(name: 'Sai Koushik', role: 'Co-coordinator'),
+      ],
     ),
     UpcomingEventModel(
       eventName: 'Envo Quiz',
@@ -372,14 +421,20 @@ class EventDataProvider {
       campus: 'Bihta',
       eventDate: DateTime(2026, 03, 31),
       registrationLink: '',
-      coordinators: [],
+      coordinators: [
+        Coordinator(name: 'Ayush Kumar', role: 'Coordinator'),
+        Coordinator(name: 'Vasu Choudhari', role: 'Co-coordinator'),
+      ],
     ),
     UpcomingEventModel(
       eventName: 'Reel Making',
       campus: 'Bihta',
       eventDate: DateTime(2026, 03, 31),
       registrationLink: '',
-      coordinators: [],
+      coordinators: [
+        Coordinator(name: 'Ayush Kumar', role: 'Coordinator'),
+        Coordinator(name: 'Vasu Choudhari', role: 'Co-coordinator'),
+      ],
     ),
     UpcomingEventModel(
       eventName: 'Treasure Hunt',
@@ -406,14 +461,20 @@ class EventDataProvider {
       campus: 'Bihta',
       eventDate: DateTime(2026, 04, 02),
       registrationLink: '',
-      coordinators: [],
+      coordinators: [
+        Coordinator(name: 'Palak Jaiswal', role: 'Coordinator'),
+        Coordinator(name: 'Nandani Awase', role: 'Co-coordinator'),
+      ],
     ),
     UpcomingEventModel(
       eventName: 'Final – Pratibimb',
       campus: 'Bihta',
       eventDate: DateTime(2026, 04, 03),
       registrationLink: '',
-      coordinators: [],
+      coordinators: [
+        Coordinator(name: 'Palak Jaiswal', role: 'Coordinator'),
+        Coordinator(name: 'Nandani Awase', role: 'Co-coordinator'),
+      ],
     ),
   ];
 
