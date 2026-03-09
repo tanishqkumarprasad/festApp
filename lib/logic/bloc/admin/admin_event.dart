@@ -20,16 +20,16 @@ class PostNotice extends AdminEvent {
   final DateTime eventDate;
   final String registrationLink;
   final String otherDetails;
-  final File imageFile;   // The raw image from the phone
-  final File pdfFile;     // The raw PDF from the phone
+  final File? imageFile;   // The raw image from the phone
+  final File? pdfFile;     // The raw PDF from the phone
 
   const PostNotice({
     required this.eventName,
     required this.eventDate,
     required this.registrationLink,
     required this.otherDetails,
-    required this.imageFile,
-    required this.pdfFile,
+    this.imageFile,
+    this.pdfFile,
   });
 
   @override

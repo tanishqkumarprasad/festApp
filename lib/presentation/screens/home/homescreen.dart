@@ -199,7 +199,7 @@ class StudentHomeScreen extends StatelessWidget {
               ),
               const SizedBox(height: 32),
               _MessageSection(
-                imagePath: 'assets/images/Director image.jpeg',
+                imagePath: 'assets/images/Directorimage1.jpeg',
                 title: 'Message from the Director’s Desk',
                 designation: 'Dr. PK Jain, Director, NIT Patna',
                 message:

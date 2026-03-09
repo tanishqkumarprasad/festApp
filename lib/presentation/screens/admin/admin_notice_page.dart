@@ -85,13 +85,10 @@ class _AdminNoticePageState extends State<AdminNoticePage> {
 
   // --- SUBMIT LOGIC ---
   void _onPostPressed() {
-    // 1. Validate that all required fields and files are provided
-    if (_eventNameController.text.isEmpty ||
-        _selectedDate == null ||
-        _imageFile == null ||
-        _pdfFile == null) {
+    // 1. Validate that name and date required fields are provided
+    if (_eventNameController.text.trim().isEmpty || _selectedDate == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please fill all fields and select both files!')),
+        const SnackBar(content: Text('Event Name and Date are required!')),
       );
       return;
     }
@@ -102,8 +99,8 @@ class _AdminNoticePageState extends State<AdminNoticePage> {
       eventDate: _selectedDate!,
       registrationLink: _registrationLinkController.text.trim(),
       otherDetails: _descriptionController.text.trim(),
-      imageFile: _imageFile!,
-      pdfFile: _pdfFile!,
+      imageFile: _imageFile,
+      pdfFile: _pdfFile,
     ));
   }
 

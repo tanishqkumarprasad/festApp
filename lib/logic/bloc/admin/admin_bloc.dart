@@ -37,30 +37,43 @@ class AdminBloc extends Bloc<AdminEvent, AdminState> {
       ) async {
     emit(const AdminActionProgress());
     try {
-      // 1. Upload Image to Cloudinary in a specific folder
-      final String? imageUrl = await _cloudinaryService.uploadToCloudinary(
-        event.imageFile,
-        'notice_images',
-      );
-      if (imageUrl == null) throw Exception('Image upload to Cloudinary failed');
+      // 1. Upload Image to Cloudinary in a specific folder (if provided)
+      String? imageUrl;
+      if (event.imageFile != null) {
+        imageUrl = await _cloudinaryService.uploadToCloudinary(
+          event.imageFile!,
+          'notice_images',
+        );
+        if (imageUrl == null) throw Exception('Image upload to Cloudinary failed');
+      }
 
-      // 2. Upload PDF to Cloudinary in a specific folder
-      final String? pdfUrl = await _cloudinaryService.uploadToCloudinary(
-        event.pdfFile,
-        'notice_rulebooks',
-      );
-      if (pdfUrl == null) throw Exception('PDF upload to Cloudinary failed');
+      // 2. Upload PDF to Cloudinary in a specific folder (if provided)
+      String? pdfUrl;
+      if (event.pdfFile != null) {
+        pdfUrl = await _cloudinaryService.uploadToCloudinary(
+          event.pdfFile!,
+          'notice_rulebooks',
+        );
+        if (pdfUrl == null) throw Exception('PDF upload to Cloudinary failed');
+      }
 
       // 3. Save all data + Cloudinary URLs to Firestore 'notices' collection
-      await _firestore.collection('notices').add(<String, dynamic>{
+      final Map<String, dynamic> firestoreData = {
         'eventName': event.eventName,
         'eventDate': Timestamp.fromDate(event.eventDate), // Best practice for Firestore dates
         'registrationLink': event.registrationLink,
         'otherDetails': event.otherDetails,
-        'imageUrl': imageUrl,         // The Cloudinary Image Link
-        'rulebookPdfUrl': pdfUrl,     // The Cloudinary PDF Link
         'createdAt': FieldValue.serverTimestamp(), // Automatically logs exact time added
-      });
+      };
+
+      if (imageUrl != null) {
+        firestoreData['imageUrl'] = imageUrl;
+      }
+      if (pdfUrl != null) {
+        firestoreData['rulebookPdfUrl'] = pdfUrl;
+      }
+
+      await _firestore.collection('notices').add(firestoreData);
 
       emit(const AdminActionSuccess('Notice and files posted successfully!'));
       emit(const AdminIdle());
